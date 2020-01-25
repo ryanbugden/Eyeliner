@@ -49,15 +49,16 @@ class Eyeliner():
             elif guideline.angle == 90:
                 f_guide_xs[int(guideline.x)] = guideline.color
         
-        g_guide_xs   = {}
-        g_guide_ys   = {}
-        for guideline in g.guidelines:
-            if guideline.angle == 0:
-                g_guide_ys[int(guideline.y)] = guideline.color
-            elif guideline.angle == 90:
-                g_guide_xs[int(guideline.x)] = guideline.color
-        
         if g != None:
+            
+            g_guide_xs   = {}
+            g_guide_ys   = {}
+            for guideline in g.guidelines:
+                if guideline.angle == 0:
+                    g_guide_ys[int(guideline.y)] = guideline.color
+                elif guideline.angle == 90:
+                    g_guide_xs[int(guideline.x)] = guideline.color
+                    
             for c in g:
                 for pt in c.points:
                     if pt.type != 'offcurve':
