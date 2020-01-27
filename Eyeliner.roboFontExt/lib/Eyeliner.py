@@ -27,7 +27,11 @@ class Eyeliner():
         col_loc_guides = getDefaultColor("glyphViewLocalGuidesColor")
         self.col_loc_guides = (col_loc_guides.redComponent(), col_loc_guides.greenComponent(), col_loc_guides.blueComponent(), col_loc_guides.alphaComponent())
         
-        self.col_blues = (0/255, 150/255, 255/255, 1)
+        col_blues = getDefaultColor("glyphViewBluesColor")
+        self.col_blues = (col_blues.redComponent(), col_blues.greenComponent(), col_blues.blueComponent(), 1)
+        
+        col_fBlues = getDefaultColor("glyphViewFamilyBluesColor")
+        self.col_fBlues = (col_fBlues.redComponent(), col_fBlues.greenComponent(), col_fBlues.blueComponent(), 1)
                 
         self.radius = 0
         self.scale = 0
@@ -40,7 +44,6 @@ class Eyeliner():
         
         f = CurrentFont()
         g = CurrentGlyph()
-        
         
         self.scale = notification['scale']
         self.radius = rad_base * self.scale
@@ -105,7 +108,7 @@ class Eyeliner():
                         # family blues
                         elif pt.y in fBlue_vals:
                             if fBlues_on == True:
-                                color = self.col_blues
+                                color = self.col_fBlues
                                 self.drawEye(pt.x, pt.y, color, angle) 
                         
                         # global vertical guides        
