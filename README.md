@@ -11,6 +11,8 @@ Eyeline currently only shows alignment to vertical metrics or 0°/90° guides.
 
 ![](./_images/Eyeliner_demo.png)
 
+
+
 ###Versions
 ```
 1.1.1 2020-01-27  Support for blue zone edges. Thanks for the suggestion, Jeremy Mickel.
