@@ -10,3 +10,9 @@ Eyeline currently only shows alignment to vertical metrics or 0°/90° guides.
 ![](./_images/Eyeliner_mechanicIcon_small.png)
 
 ![](./_images/Eyeliner_demo.png)
+
+###Versions
+```
+1.1.0 2020-01-27  Support for blue zone edges. Static color. Thanks for suggestion, Jeremy Mickel.
+1.0.0 2020-01-24  Initial
+```

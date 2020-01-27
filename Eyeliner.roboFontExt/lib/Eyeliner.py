@@ -1,6 +1,7 @@
 from mojo.events import addObserver
 from mojo.drawingTools import *
 from lib.tools.defaults import getDefaultColor, getDefault
+from mojo.UI import getGlyphViewDisplaySettings
 
 rad_base = getDefault("glyphViewOncurvePointsSize") * 1.7
 
@@ -10,6 +11,7 @@ class Eyeliner():
     Adds a little shape around points that are on the vertical metrics or guidelines.
     
     Ryan Bugden
+    v1.1.9 : 2020.01.27
     v1.0.0 : 2020.01.24
     v0.9.0 : 2019.06.04
     '''
@@ -24,6 +26,8 @@ class Eyeliner():
         
         col_loc_guides = getDefaultColor("glyphViewLocalGuidesColor")
         self.col_loc_guides = (col_loc_guides.redComponent(), col_loc_guides.greenComponent(), col_loc_guides.blueComponent(), col_loc_guides.alphaComponent())
+        
+        self.col_blues = (0/255, 150/255, 255/255, 1)
                 
         self.radius = 0
         self.scale = 0
@@ -37,10 +41,13 @@ class Eyeliner():
         f = CurrentFont()
         g = CurrentGlyph()
         
+        
         self.scale = notification['scale']
         self.radius = rad_base * self.scale
         
+        # get vertical metrics y's
         vert_metrics = [f.info.descender, 0, f.info.xHeight, f.info.ascender, f.info.capHeight]
+        # get guide x's and y's
         f_guide_xs   = {}
         f_guide_ys   = {}
         for guideline in f.guidelines:
@@ -48,6 +55,11 @@ class Eyeliner():
                 f_guide_ys[int(guideline.y)] = guideline.color
             elif guideline.angle == 90:
                 f_guide_xs[int(guideline.x)] = guideline.color
+        # get blue y's
+        blue_vals = f.info.postscriptBlueValues + f.info.postscriptOtherBlues
+        fBlue_vals = f.info.postscriptFamilyBlues + f.info.postscriptFamilyOtherBlues
+        blues_on  = getGlyphViewDisplaySettings()['Blues']
+        fBlues_on = getGlyphViewDisplaySettings()['Family Blues']
         
         if g != None:
             
@@ -64,6 +76,7 @@ class Eyeliner():
                     if pt.type != 'offcurve':
                         angle = 0
                         color = None
+                        
                         # vertical metrics
                         if pt.y in vert_metrics:
                             color = self.col_vert_metrics
@@ -82,6 +95,18 @@ class Eyeliner():
                             if color == None:
                                 color = self.col_loc_guides
                             self.drawEye(pt.x, pt.y, color, angle)
+                            
+                        # blues
+                        elif pt.y in blue_vals:
+                            if blues_on == True:
+                                color = self.col_blues
+                                self.drawEye(pt.x, pt.y, color, angle) 
+                            
+                        # family blues
+                        elif pt.y in fBlue_vals:
+                            if fBlues_on == True:
+                                color = self.col_blues
+                                self.drawEye(pt.x, pt.y, color, angle) 
                         
                         # global vertical guides        
                         if pt.x in f_guide_xs.keys():
@@ -98,6 +123,8 @@ class Eyeliner():
                             if color == None:
                                 color = self.col_loc_guides
                             self.drawEye(pt.x, pt.y, color, angle)
+                            
+                        
                                                                
                                     
                         
