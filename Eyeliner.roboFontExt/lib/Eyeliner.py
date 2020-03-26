@@ -2,6 +2,7 @@ from mojo.events import addObserver
 from mojo.drawingTools import *
 from lib.tools.defaults import getDefaultColor, getDefault
 from mojo.UI import getGlyphViewDisplaySettings
+from lib.tools.misc import NSColorToRgba
 
 rad_base = getDefault("glyphViewOncurvePointsSize") * 1.7
 
@@ -11,21 +12,17 @@ class Eyeliner():
     Adds a little shape around points that are on the vertical metrics or guidelines.
     
     Ryan Bugden
-    v1.1.9 : 2020.01.27
+    v1.2.0 : 2020.03.26
+    v1.1.1 : 2020.01.27
     v1.0.0 : 2020.01.24
     v0.9.0 : 2019.06.04
     '''
     
     def __init__(self):
         
-        col_vert_metrics = getDefaultColor("glyphViewMetricsColor")
-        self.col_vert_metrics = (col_vert_metrics.redComponent(), col_vert_metrics.greenComponent(), col_vert_metrics.blueComponent(), col_vert_metrics.alphaComponent())
-        
-        col_glob_guides = getDefaultColor("glyphViewGlobalGuidesColor")
-        self.col_glob_guides = (col_glob_guides.redComponent(), col_glob_guides.greenComponent(), col_glob_guides.blueComponent(), col_glob_guides.alphaComponent())
-        
-        col_loc_guides = getDefaultColor("glyphViewLocalGuidesColor")
-        self.col_loc_guides = (col_loc_guides.redComponent(), col_loc_guides.greenComponent(), col_loc_guides.blueComponent(), col_loc_guides.alphaComponent())
+        self.col_vert_metrics = NSColorToRgba(getDefaultColor("glyphViewMetricsColor"))
+        self.col_glob_guides = NSColorToRgba(getDefaultColor("glyphViewGlobalGuidesColor"))
+        self.col_loc_guides = NSColorToRgba(getDefaultColor("glyphViewLocalGuidesColor"))
         
         col_blues = getDefaultColor("glyphViewBluesColor")
         self.col_blues = (col_blues.redComponent(), col_blues.greenComponent(), col_blues.blueComponent(), 1)
@@ -33,8 +30,8 @@ class Eyeliner():
         col_fBlues = getDefaultColor("glyphViewFamilyBluesColor")
         self.col_fBlues = (col_fBlues.redComponent(), col_fBlues.greenComponent(), col_fBlues.blueComponent(), 1)
                 
-        self.radius = 0
         self.scale = 0
+        self.radius = 0
         
         addObserver(self, "drawBackground", "drawBackground")
         addObserver(self, "drawBackground", "drawBackgroundInactive")
@@ -42,8 +39,8 @@ class Eyeliner():
         
     def drawBackground(self, notification):
         
-        f = CurrentFont()
-        g = CurrentGlyph()
+        g = notification["glyph"]
+        f = g.font
         
         self.scale = notification['scale']
         self.radius = rad_base * self.scale
