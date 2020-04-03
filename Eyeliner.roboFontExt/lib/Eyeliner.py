@@ -3,15 +3,17 @@ from mojo.drawingTools import *
 from lib.tools.defaults import getDefaultColor, getDefault
 from mojo.UI import getGlyphViewDisplaySettings
 from lib.tools.misc import NSColorToRgba
+from fontTools.misc.fixedTools import otRound
 
 rad_base = getDefault("glyphViewOncurvePointsSize") * 1.7
 
 class Eyeliner():
     
     '''
-    Adds a little shape around points that are on the vertical metrics or guidelines.
+    Adds a little eye around points that are on the font’s vertical dimensions or guidelines.
     
     Ryan Bugden
+    v1.2.1 : 2020.04.03
     v1.2.0 : 2020.03.26
     v1.1.1 : 2020.01.27
     v1.0.0 : 2020.01.24
@@ -52,9 +54,9 @@ class Eyeliner():
         f_guide_ys   = {}
         for guideline in f.guidelines:
             if guideline.angle == 0:
-                f_guide_ys[int(guideline.y)] = guideline.color
+                f_guide_ys[otRound(guideline.y)] = guideline.color
             elif guideline.angle == 90:
-                f_guide_xs[int(guideline.x)] = guideline.color
+                f_guide_xs[otRound(guideline.x)] = guideline.color
         # get blue y's
         blue_vals = f.info.postscriptBlueValues + f.info.postscriptOtherBlues
         fBlue_vals = f.info.postscriptFamilyBlues + f.info.postscriptFamilyOtherBlues
@@ -67,9 +69,9 @@ class Eyeliner():
             g_guide_ys   = {}
             for guideline in g.guidelines:
                 if guideline.angle == 0:
-                    g_guide_ys[int(guideline.y)] = guideline.color
+                    g_guide_ys[otRound(guideline.y)] = guideline.color
                 elif guideline.angle == 90:
-                    g_guide_xs[int(guideline.x)] = guideline.color
+                    g_guide_xs[otRound(guideline.x)] = guideline.color
                     
             for c in g:
                 for pt in c.points:
@@ -78,48 +80,48 @@ class Eyeliner():
                         color = None
                         
                         # vertical metrics
-                        if pt.y in vert_metrics:
+                        if otRound(pt.y) in vert_metrics:
                             color = self.col_vert_metrics
                             self.drawEye(pt.x, pt.y, color, angle)  
                             
                         # global horizontal guides
-                        elif pt.y in f_guide_ys.keys():
-                            color = f_guide_ys[int(pt.y)]
+                        elif otRound(pt.y) in f_guide_ys.keys():
+                            color = f_guide_ys[otRound(pt.y)]
                             if color == None:
                                 color = self.col_glob_guides
                             self.drawEye(pt.x, pt.y, color, angle)  
                             
                         # local horizontal guides
-                        elif pt.y in g_guide_ys.keys():
-                            color = g_guide_ys[int(pt.y)]
+                        elif otRound(pt.y) in g_guide_ys.keys():
+                            color = g_guide_ys[otRound(pt.y)]
                             if color == None:
                                 color = self.col_loc_guides
                             self.drawEye(pt.x, pt.y, color, angle)
                             
                         # blues
-                        elif pt.y in blue_vals:
+                        elif otRound(pt.y) in blue_vals:
                             if blues_on == True:
                                 color = self.col_blues
                                 self.drawEye(pt.x, pt.y, color, angle) 
                             
                         # family blues
-                        elif pt.y in fBlue_vals:
+                        elif otRound(pt.y) in fBlue_vals:
                             if fBlues_on == True:
                                 color = self.col_fBlues
                                 self.drawEye(pt.x, pt.y, color, angle) 
                         
                         # global vertical guides        
-                        if pt.x in f_guide_xs.keys():
+                        if otRound(pt.x) in f_guide_xs.keys():
                             angle = 90
-                            color = f_guide_xs[int(pt.x)]
+                            color = f_guide_xs[otRound(pt.x)]
                             if color == None:
                                 color = self.col_glob_guides
                             self.drawEye(pt.x, pt.y, color, angle)
                             
                         # local vertical guides        
-                        elif pt.x in g_guide_xs.keys():
+                        elif otRound(pt.x) in g_guide_xs.keys():
                             angle = 90
-                            color = g_guide_xs[int(pt.x)]
+                            color = g_guide_xs[otRound(pt.x)]
                             if color == None:
                                 color = self.col_loc_guides
                             self.drawEye(pt.x, pt.y, color, angle)
@@ -132,7 +134,8 @@ class Eyeliner():
         
         stretch = 0.7
         save()
-        translate(x, y)
+        # rounding the eye to nearest unit even though point might not be:
+        translate(otRound(x), otRound(y))
         rotate(angle)
         
         fill(None)
