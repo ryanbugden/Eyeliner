@@ -5,14 +5,15 @@ from mojo.UI import getGlyphViewDisplaySettings
 from lib.tools.misc import NSColorToRgba
 from fontTools.misc.fixedTools import otRound
 
-rad_base = getDefault("glyphViewOncurvePointsSize") * 1.7
+rad_base = getDefault("glyphViewOncurvePointsSize") * 1.75
 
 class Eyeliner():
     
     '''
-    Adds a little eye around points that are on the font’s vertical dimensions or guidelines.
+    Adds a little eye around points and anchors that are on the vertical font  dimensions or guidelines.
     
     Ryan Bugden
+    v1.2.5 : 2020.07.15
     v1.2.1 : 2020.04.03
     v1.2.0 : 2020.03.26
     v1.1.1 : 2020.01.27
@@ -22,15 +23,14 @@ class Eyeliner():
     
     def __init__(self):
         
-        self.col_vert_metrics = NSColorToRgba(getDefaultColor("glyphViewMetricsColor"))
-        self.col_glob_guides = NSColorToRgba(getDefaultColor("glyphViewGlobalGuidesColor"))
-        self.col_loc_guides = NSColorToRgba(getDefaultColor("glyphViewLocalGuidesColor"))
+        self.col_font_dim = self.getFlattenedAlpha(NSColorToRgba(getDefaultColor("glyphViewMetricsColor")))
+        self.col_glob_guides = self.getFlattenedAlpha(NSColorToRgba(getDefaultColor("glyphViewGlobalGuidesColor")))
+        self.col_loc_guides = self.getFlattenedAlpha(NSColorToRgba(getDefaultColor("glyphViewLocalGuidesColor")))
         
-        col_blues = getDefaultColor("glyphViewBluesColor")
-        self.col_blues = (col_blues.redComponent(), col_blues.greenComponent(), col_blues.blueComponent(), 1)
-        
-        col_fBlues = getDefaultColor("glyphViewFamilyBluesColor")
-        self.col_fBlues = (col_fBlues.redComponent(), col_fBlues.greenComponent(), col_fBlues.blueComponent(), 1)
+        r, g, b, a = NSColorToRgba(getDefaultColor("glyphViewBluesColor"))
+        self.col_blues = (r, g, b, 1)
+        r, g, b, a = NSColorToRgba(getDefaultColor("glyphViewFamilyBluesColor"))
+        self.col_fBlues = (r, g, b, 1)
                 
         self.scale = 0
         self.radius = 0
@@ -39,96 +39,117 @@ class Eyeliner():
         addObserver(self, "drawBackground", "drawBackgroundInactive")
         
         
+    def getFlattenedAlpha(self, color):
+        
+        # flatten transparency of eye, using background color preference
+        r, g, b, a = color
+        r2, g2, b2, a2 = NSColorToRgba(getDefaultColor("glyphViewBackgroundColor"))
+        r3 = r2 + (r-r2)*a
+        g3 = g2 + (g-g2)*a
+        b3 = b2 + (b-b2)*a
+    
+        return (r3, g3, b3, 1)
+        
+        
     def drawBackground(self, notification):
         
-        g = notification["glyph"]
-        f = g.font
+        self.g = notification["glyph"]
+        self.f = self.g.font
         
         self.scale = notification['scale']
         self.radius = rad_base * self.scale
         
-        # get vertical metrics y's
-        vert_metrics = [f.info.descender, 0, f.info.xHeight, f.info.ascender, f.info.capHeight]
+        if self.g != None:
+            # on-curve points
+            for c in self.g:
+                for pt in c.points:
+                    if pt.type != 'offcurve':
+                        self.checkMetrics(pt.x, pt.y)
+            # anchors
+            for a in self.g.anchors:
+                self.checkMetrics(a.x, a.y)
+                            
+                                
+    def checkMetrics(self, x, y):
+        
+        # get font dimensions y's
+        font_dim = [self.f.info.descender, 0, self.f.info.xHeight, self.f.info.ascender, self.f.info.capHeight]
         # get guide x's and y's
-        f_guide_xs   = {}
-        f_guide_ys   = {}
-        for guideline in f.guidelines:
+        f_guide_xs = {}
+        f_guide_ys = {}
+        for guideline in self.f.guidelines:
             if guideline.angle == 0:
                 f_guide_ys[otRound(guideline.y)] = guideline.color
             elif guideline.angle == 90:
                 f_guide_xs[otRound(guideline.x)] = guideline.color
-        # get blue y's
-        blue_vals = f.info.postscriptBlueValues + f.info.postscriptOtherBlues
-        fBlue_vals = f.info.postscriptFamilyBlues + f.info.postscriptFamilyOtherBlues
-        blues_on  = getGlyphViewDisplaySettings()['Blues']
-        fBlues_on = getGlyphViewDisplaySettings()['Family Blues']
+        # get blue y's and whether they're set to be displayed
+        blue_vals  = self.f.info.postscriptBlueValues + self.f.info.postscriptOtherBlues
+        fBlue_vals = self.f.info.postscriptFamilyBlues + self.f.info.postscriptFamilyOtherBlues
+        blues_on   = getGlyphViewDisplaySettings()['Blues']
+        fBlues_on  = getGlyphViewDisplaySettings()['Family Blues']
         
-        if g != None:
+        if self.g != None:
             
-            g_guide_xs   = {}
-            g_guide_ys   = {}
-            for guideline in g.guidelines:
+            g_guide_xs = {}
+            g_guide_ys = {}
+            for guideline in self.g.guidelines:
                 if guideline.angle == 0:
                     g_guide_ys[otRound(guideline.y)] = guideline.color
                 elif guideline.angle == 90:
                     g_guide_xs[otRound(guideline.x)] = guideline.color
                     
-            for c in g:
-                for pt in c.points:
-                    if pt.type != 'offcurve':
-                        angle = 0
-                        color = None
-                        
-                        # vertical metrics
-                        if otRound(pt.y) in vert_metrics:
-                            color = self.col_vert_metrics
-                            self.drawEye(pt.x, pt.y, color, angle)  
-                            
-                        # global horizontal guides
-                        elif otRound(pt.y) in f_guide_ys.keys():
-                            color = f_guide_ys[otRound(pt.y)]
-                            if color == None:
-                                color = self.col_glob_guides
-                            self.drawEye(pt.x, pt.y, color, angle)  
-                            
-                        # local horizontal guides
-                        elif otRound(pt.y) in g_guide_ys.keys():
-                            color = g_guide_ys[otRound(pt.y)]
-                            if color == None:
-                                color = self.col_loc_guides
-                            self.drawEye(pt.x, pt.y, color, angle)
-                            
-                        # blues
-                        elif otRound(pt.y) in blue_vals:
-                            if blues_on == True:
-                                color = self.col_blues
-                                self.drawEye(pt.x, pt.y, color, angle) 
-                            
-                        # family blues
-                        elif otRound(pt.y) in fBlue_vals:
-                            if fBlues_on == True:
-                                color = self.col_fBlues
-                                self.drawEye(pt.x, pt.y, color, angle) 
-                        
-                        # global vertical guides        
-                        if otRound(pt.x) in f_guide_xs.keys():
-                            angle = 90
-                            color = f_guide_xs[otRound(pt.x)]
-                            if color == None:
-                                color = self.col_glob_guides
-                            self.drawEye(pt.x, pt.y, color, angle)
-                            
-                        # local vertical guides        
-                        elif otRound(pt.x) in g_guide_xs.keys():
-                            angle = 90
-                            color = g_guide_xs[otRound(pt.x)]
-                            if color == None:
-                                color = self.col_loc_guides
-                            self.drawEye(pt.x, pt.y, color, angle)
-                            
-                        
-                                                               
-                                    
+            angle = 0
+            color = None
+            
+            # ==== HORIZONTAL STUFF ==== #
+            # global horizontal guides
+            if otRound(y) in f_guide_ys.keys():
+                color = f_guide_ys[otRound(y)]
+                if color == None:
+                    color = self.col_glob_guides
+                self.drawEye(x, y, color, angle)  
+            
+            # local horizontal guides
+            elif otRound(y) in g_guide_ys.keys():
+                color = g_guide_ys[otRound(y)]
+                if color == None:
+                    color = self.col_loc_guides
+                self.drawEye(x, y, color, angle)
+
+            # font dimensions
+            elif otRound(y) in font_dim:
+                color = self.col_font_dim
+                self.drawEye(x, y, color, angle) 
+            
+            # blues
+            elif otRound(y) in blue_vals:
+                if blues_on == True:
+                    color = self.col_blues
+                    self.drawEye(x, y, color, angle) 
+            
+            # family blues
+            elif otRound(y) in fBlue_vals:
+                if fBlues_on == True:
+                    color = self.col_fBlues
+                    self.drawEye(x, y, color, angle) 
+                    
+            # ==== VERTICAL STUFF ==== #
+            # global vertical guides        
+            if otRound(x) in f_guide_xs.keys():
+                angle = 90
+                color = f_guide_xs[otRound(x)]
+                if color == None:
+                    color = self.col_glob_guides
+                self.drawEye(x, y, color, angle)
+            
+            # local vertical guides        
+            elif otRound(x) in g_guide_xs.keys():
+                angle = 90
+                color = g_guide_xs[otRound(x)]
+                if color == None:
+                    color = self.col_loc_guides
+                self.drawEye(x, y, color, angle)
+                                            
                         
     def drawEye(self, x, y, color, angle):
         
@@ -151,6 +172,7 @@ class Eyeliner():
         drawPath()
         closePath()
         restore()
-
+        
+        
             
 Eyeliner()
