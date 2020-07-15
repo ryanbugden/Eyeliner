@@ -18,8 +18,8 @@ Eyeline shapes will match the appropriate color of whatever line it's aligning t
 	1.2.1 2020.04.03  Eye is rounded to nearest unit, making it possible 
 	                  to see eye during a transformation with the Transform 
 	                  tool, before mouse-up.
-	1.2.0 2020-03-26  Bug-fix. Allows multiple open fonts to have independent eyes. 
+	1.2.0 2020.03.26  Bug-fix. Allows multiple open fonts to have independent eyes. 
 	                  Optimize coloring code a bit.
-	1.1.1 2020-01-27  Support for blue zone edges. 
+	1.1.1 2020.01.27  Support for blue zone edges. 
 	                  Thanks for the suggestion, Jeremy Mickel.
-	1.0.0 2020-01-24  Initial release
+	1.0.0 2020.01.24  Initial release
