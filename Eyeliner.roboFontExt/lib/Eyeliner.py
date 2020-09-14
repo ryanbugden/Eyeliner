@@ -13,6 +13,7 @@ class Eyeliner():
     Adds a little eye around points and anchors that are on the vertical font  dimensions or guidelines.
     
     Ryan Bugden
+    v1.2.7 : 2020.09.14
     v1.2.5 : 2020.07.15
     v1.2.1 : 2020.04.03
     v1.2.0 : 2020.03.26
@@ -93,9 +94,9 @@ class Eyeliner():
             g_guide_xs = {}
             g_guide_ys = {}
             for guideline in self.g.guidelines:
-                if guideline.angle == 0:
+                if guideline.angle in [0,180]:
                     g_guide_ys[otRound(guideline.y)] = guideline.color
-                elif guideline.angle == 90:
+                elif guideline.angle in [90, 270]:
                     g_guide_xs[otRound(guideline.x)] = guideline.color
                     
             angle = 0
@@ -134,9 +135,10 @@ class Eyeliner():
                     self.drawEye(x, y, color, angle) 
                     
             # ==== VERTICAL STUFF ==== #
+            angle = 90
+
             # global vertical guides        
             if otRound(x) in f_guide_xs.keys():
-                angle = 90
                 color = f_guide_xs[otRound(x)]
                 if color == None:
                     color = self.col_glob_guides
@@ -144,7 +146,6 @@ class Eyeliner():
             
             # local vertical guides        
             elif otRound(x) in g_guide_xs.keys():
-                angle = 90
                 color = g_guide_xs[otRound(x)]
                 if color == None:
                     color = self.col_loc_guides
