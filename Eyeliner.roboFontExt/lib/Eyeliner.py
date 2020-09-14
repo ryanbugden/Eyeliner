@@ -78,9 +78,9 @@ class Eyeliner():
         f_guide_xs = {}
         f_guide_ys = {}
         for guideline in self.f.guidelines:
-            if guideline.angle == 0:
+            if guideline.angle in [0,180]:
                 f_guide_ys[otRound(guideline.y)] = guideline.color
-            elif guideline.angle == 90:
+            elif guideline.angle in [90, 270]:
                 f_guide_xs[otRound(guideline.x)] = guideline.color
         # get blue y's and whether they're set to be displayed
         blue_vals  = self.f.info.postscriptBlueValues + self.f.info.postscriptOtherBlues
