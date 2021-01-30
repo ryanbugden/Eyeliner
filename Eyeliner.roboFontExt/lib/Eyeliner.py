@@ -60,7 +60,7 @@ class Eyeliner():
         self.scale = notification['scale']
         self.radius = rad_base * self.scale
 
-        if self.g != None:
+        if self.g is not None:
             # on-curve points
             for c in self.g:
                 for pt in c.points:
@@ -89,7 +89,7 @@ class Eyeliner():
         blues_on   = getGlyphViewDisplaySettings()['Blues']
         fBlues_on  = getGlyphViewDisplaySettings()['Family Blues']
 
-        if self.g != None:
+        if self.g is not None:
 
             g_guide_xs = {}
             g_guide_ys = {}
@@ -106,14 +106,14 @@ class Eyeliner():
             # global horizontal guides
             if otRound(y) in f_guide_ys.keys():
                 color = f_guide_ys[otRound(y)]
-                if color == None:
+                if color is None:
                     color = self.col_glob_guides
                 self.drawEye(x, y, color, angle)
 
             # local horizontal guides
             elif otRound(y) in g_guide_ys.keys():
                 color = g_guide_ys[otRound(y)]
-                if color == None:
+                if color is None:
                     color = self.col_loc_guides
                 self.drawEye(x, y, color, angle)
 
@@ -124,13 +124,13 @@ class Eyeliner():
 
             # blues
             elif otRound(y) in blue_vals:
-                if blues_on == True:
+                if blues_on is True:
                     color = self.col_blues
                     self.drawEye(x, y, color, angle)
 
             # family blues
             elif otRound(y) in fBlue_vals:
-                if fBlues_on == True:
+                if fBlues_on is True:
                     color = self.col_fBlues
                     self.drawEye(x, y, color, angle)
 
@@ -140,14 +140,14 @@ class Eyeliner():
             # global vertical guides
             if otRound(x) in f_guide_xs.keys():
                 color = f_guide_xs[otRound(x)]
-                if color == None:
+                if color is None:
                     color = self.col_glob_guides
                 self.drawEye(x, y, color, angle)
 
             # local vertical guides
             elif otRound(x) in g_guide_xs.keys():
                 color = g_guide_xs[otRound(x)]
-                if color == None:
+                if color is None:
                     color = self.col_loc_guides
                 self.drawEye(x, y, color, angle)
 
