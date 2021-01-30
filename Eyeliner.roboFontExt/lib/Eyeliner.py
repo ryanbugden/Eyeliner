@@ -93,7 +93,10 @@ class Eyeliner():
         blue_vals = self.f.info.postscriptBlueValues + self.f.info.postscriptOtherBlues
         fBlue_vals = self.f.info.postscriptFamilyBlues + self.f.info.postscriptFamilyOtherBlues
         blues_on = getGlyphViewDisplaySettings()['Blues']
-        fBlues_on = getGlyphViewDisplaySettings()['Family Blues']
+        try:
+            fBlues_on = getGlyphViewDisplaySettings()['Family Blues']
+        except KeyError:  # RF 4
+            fBlues_on = getGlyphViewDisplaySettings()['FamilyBlues']
 
         if self.g is not None:
 
