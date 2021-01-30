@@ -1,9 +1,10 @@
-from mojo.events import addObserver
-from mojo.drawingTools import *
-from lib.tools.defaults import getDefaultColor, getDefault
-from mojo.UI import getGlyphViewDisplaySettings
-from lib.tools.misc import NSColorToRgba
+import mojo.drawingTools as db
+
 from fontTools.misc.fixedTools import otRound
+from lib.tools.defaults import getDefaultColor, getDefault
+from lib.tools.misc import NSColorToRgba
+from mojo.events import addObserver
+from mojo.UI import getGlyphViewDisplaySettings
 
 rad_base = getDefault("glyphViewOncurvePointsSize") * 1.75
 
@@ -163,37 +164,37 @@ class Eyeliner():
     def drawEye(self, x, y, color, angle):
 
         stretch = 0.7
-        save()
+        db.save()
         # rounding the eye to nearest unit even though point might not be:
-        translate(otRound(x), otRound(y))
-        rotate(angle)
+        db.translate(otRound(x), otRound(y))
+        db.rotate(angle)
 
-        fill(None)
-        strokeWidth(self.scale / 2)
-        stroke(*color)
+        db.fill(None)
+        db.strokeWidth(self.scale / 2)
+        db.stroke(*color)
 
-        newPath()
-        moveTo(
+        db.newPath()
+        db.moveTo(
             (6 * self.radius * stretch, 0))
-        curveTo(
+        db.curveTo(
             (2 * self.radius * stretch, 0),
             (1.25 * self.radius * stretch, -self.radius),
             (0, -self.radius))
-        curveTo(
+        db.curveTo(
             (-1.25 * self.radius * stretch, -self.radius),
             (-2 * self.radius, 0),
             (-6 * self.radius * stretch, 0))
-        curveTo(
+        db.curveTo(
             (-2 * self.radius * stretch, 0),
             (-1.25 * self.radius * stretch, self.radius),
             (0, self.radius))
-        curveTo(
+        db.curveTo(
             (1.25 * self.radius * stretch, self.radius),
             (2 * self.radius * stretch, 0),
             (6 * self.radius * stretch, 0))
-        drawPath()
-        closePath()
-        restore()
+        db.drawPath()
+        db.closePath()
+        db.restore()
 
 
 Eyeliner()
