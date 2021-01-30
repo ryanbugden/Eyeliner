@@ -10,7 +10,8 @@ rad_base = getDefault("glyphViewOncurvePointsSize") * 1.75
 class Eyeliner():
 
     '''
-    Adds a little eye around points and anchors that are on the vertical font  dimensions or guidelines.
+    Adds a little eye around points and anchors that are on the
+    vertical font dimensions or guidelines.
 
     Ryan Bugden
     v1.2.7 : 2020.09.14
@@ -24,13 +25,18 @@ class Eyeliner():
 
     def __init__(self):
 
-        self.col_font_dim = self.getFlattenedAlpha(NSColorToRgba(getDefaultColor("glyphViewMetricsColor")))
-        self.col_glob_guides = self.getFlattenedAlpha(NSColorToRgba(getDefaultColor("glyphViewGlobalGuidesColor")))
-        self.col_loc_guides = self.getFlattenedAlpha(NSColorToRgba(getDefaultColor("glyphViewLocalGuidesColor")))
+        self.col_font_dim = self.getFlattenedAlpha(
+            NSColorToRgba(getDefaultColor("glyphViewMetricsColor")))
+        self.col_glob_guides = self.getFlattenedAlpha(
+            NSColorToRgba(getDefaultColor("glyphViewGlobalGuidesColor")))
+        self.col_loc_guides = self.getFlattenedAlpha(
+            NSColorToRgba(getDefaultColor("glyphViewLocalGuidesColor")))
 
-        r, g, b, a = NSColorToRgba(getDefaultColor("glyphViewBluesColor"))
+        r, g, b, a = NSColorToRgba(
+            getDefaultColor("glyphViewBluesColor"))
         self.col_blues = (r, g, b, 1)
-        r, g, b, a = NSColorToRgba(getDefaultColor("glyphViewFamilyBluesColor"))
+        r, g, b, a = NSColorToRgba(
+            getDefaultColor("glyphViewFamilyBluesColor"))
         self.col_fBlues = (r, g, b, 1)
 
         self.scale = 0
@@ -39,18 +45,17 @@ class Eyeliner():
         addObserver(self, "drawBackground", "drawBackground")
         addObserver(self, "drawBackground", "drawBackgroundInactive")
 
-
     def getFlattenedAlpha(self, color):
 
         # flatten transparency of eye, using background color preference
         r, g, b, a = color
-        r2, g2, b2, a2 = NSColorToRgba(getDefaultColor("glyphViewBackgroundColor"))
-        r3 = r2 + (r-r2)*a
-        g3 = g2 + (g-g2)*a
-        b3 = b2 + (b-b2)*a
+        r2, g2, b2, a2 = NSColorToRgba(
+            getDefaultColor("glyphViewBackgroundColor"))
+        r3 = r2 + (r - r2) * a
+        g3 = g2 + (g - g2) * a
+        b3 = b2 + (b - b2) * a
 
         return (r3, g3, b3, 1)
-
 
     def drawBackground(self, notification):
 
@@ -70,31 +75,32 @@ class Eyeliner():
             for a in self.g.anchors:
                 self.checkMetrics(a.x, a.y)
 
-
     def checkMetrics(self, x, y):
 
         # get font dimensions y's
-        font_dim = [self.f.info.descender, 0, self.f.info.xHeight, self.f.info.ascender, self.f.info.capHeight]
+        font_dim = [
+            self.f.info.descender, 0, self.f.info.xHeight,
+            self.f.info.ascender, self.f.info.capHeight]
         # get guide x's and y's
         f_guide_xs = {}
         f_guide_ys = {}
         for guideline in self.f.guidelines:
-            if guideline.angle in [0,180]:
+            if guideline.angle in [0, 180]:
                 f_guide_ys[otRound(guideline.y)] = guideline.color
             elif guideline.angle in [90, 270]:
                 f_guide_xs[otRound(guideline.x)] = guideline.color
         # get blue y's and whether they're set to be displayed
-        blue_vals  = self.f.info.postscriptBlueValues + self.f.info.postscriptOtherBlues
+        blue_vals = self.f.info.postscriptBlueValues + self.f.info.postscriptOtherBlues
         fBlue_vals = self.f.info.postscriptFamilyBlues + self.f.info.postscriptFamilyOtherBlues
-        blues_on   = getGlyphViewDisplaySettings()['Blues']
-        fBlues_on  = getGlyphViewDisplaySettings()['Family Blues']
+        blues_on = getGlyphViewDisplaySettings()['Blues']
+        fBlues_on = getGlyphViewDisplaySettings()['Family Blues']
 
         if self.g is not None:
 
             g_guide_xs = {}
             g_guide_ys = {}
             for guideline in self.g.guidelines:
-                if guideline.angle in [0,180]:
+                if guideline.angle in [0, 180]:
                     g_guide_ys[otRound(guideline.y)] = guideline.color
                 elif guideline.angle in [90, 270]:
                     g_guide_xs[otRound(guideline.x)] = guideline.color
@@ -151,7 +157,6 @@ class Eyeliner():
                     color = self.col_loc_guides
                 self.drawEye(x, y, color, angle)
 
-
     def drawEye(self, x, y, color, angle):
 
         stretch = 0.7
@@ -161,19 +166,31 @@ class Eyeliner():
         rotate(angle)
 
         fill(None)
-        strokeWidth(self.scale/2)
+        strokeWidth(self.scale / 2)
         stroke(*color)
 
         newPath()
-        moveTo((6*self.radius*stretch, 0))
-        curveTo((2*self.radius*stretch, 0), (1.25*self.radius*stretch, -self.radius), (0, -self.radius))
-        curveTo((-1.25*self.radius*stretch, -self.radius), (-2*self.radius, 0), (-6*self.radius*stretch, 0))
-        curveTo((-2*self.radius*stretch, 0), (-1.25*self.radius*stretch, self.radius), (0, self.radius))
-        curveTo((1.25*self.radius*stretch, self.radius), (2*self.radius*stretch, 0), (6*self.radius*stretch, 0))
+        moveTo(
+            (6 * self.radius * stretch, 0))
+        curveTo(
+            (2 * self.radius * stretch, 0),
+            (1.25 * self.radius * stretch, -self.radius),
+            (0, -self.radius))
+        curveTo(
+            (-1.25 * self.radius * stretch, -self.radius),
+            (-2 * self.radius, 0),
+            (-6 * self.radius * stretch, 0))
+        curveTo(
+            (-2 * self.radius * stretch, 0),
+            (-1.25 * self.radius * stretch, self.radius),
+            (0, self.radius))
+        curveTo(
+            (1.25 * self.radius * stretch, self.radius),
+            (2 * self.radius * stretch, 0),
+            (6 * self.radius * stretch, 0))
         drawPath()
         closePath()
         restore()
-
 
 
 Eyeliner()
