@@ -13,6 +13,8 @@ Eyeline shapes will match the appropriate color of whatever line it's aligning t
 
 ### Versions
 
+	1.2.8 2021.01.30  Support for RF4 & code cleanup.                              
+	                  PR - Thanks Frank Grießhammer.
 	1.2.7 2020.09.14  Support for 180° & 270°.                              
 	                  PR - Thanks Connor Davenport.
 	1.2.5 2020.07.15  Guides take precedence over font dimensions.                              
