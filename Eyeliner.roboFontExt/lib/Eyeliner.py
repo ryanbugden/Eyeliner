@@ -12,9 +12,11 @@ class Eyeliner():
 
     '''
     Adds a little eye around points and anchors that are on the
-    vertical font dimensions or guidelines.
+    vertical font dimensions, guidelines, or edges of blue zones.
 
     Ryan Bugden
+    v1.2.9 : 2021.03.17
+    v1.2.8 : 2021.01.30
     v1.2.7 : 2020.09.14
     v1.2.5 : 2020.07.15
     v1.2.1 : 2020.04.03
@@ -61,7 +63,11 @@ class Eyeliner():
     def drawBackground(self, notification):
 
         self.g = notification["glyph"]
+        if self.g == None:
+            return
         self.f = self.g.font
+        if self.f == None:
+            return
 
         self.scale = notification['scale']
         self.radius = rad_base * self.scale
