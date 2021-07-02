@@ -3,7 +3,7 @@
 
 RoboFont extension that highlights points and anchors that are aligned with vertical font dimensions, 0°/90° guides, or blue zones (if set to be visible). Rest assured that your points are aligned, without having to zoom in and check (;
 
-Eyeline shapes will match the appropriate color of whatever line it's aligning to, based on the color preferences you have set in RoboFont.
+Eyeliner shapes will match the appropriate color of whatever line it's aligning to, based on the color preferences you have set in RoboFont.
 
 
 ![](./_images/Eyeliner_mechanicIcon_small.png)
@@ -11,11 +11,14 @@ Eyeline shapes will match the appropriate color of whatever line it's aligning t
 ![](./_images/Eyeliner_demo.png)
 
 
+
 ### Versions
 
+	2.0.0 2021.07.02  Rewritten for RoboFont 4. Eyes are crispy now!     
+	                  Support for changing anchor/on-curve display settings.       
 	1.2.9 2021.03.17  Dodging tracebacks.                              
 	                  Thanks Jackson Showalter-Cavanaugh.
-	1.2.8 2021.01.30  Support for RF4 & code cleanup.                              
+	1.2.8 2021.01.30  Squash RF4 "Family Blues" bug & code cleanup.                              
 	                  PR - Thanks Frank Grießhammer.
 	1.2.7 2020.09.14  Support for 180° & 270°.                              
 	                  PR - Thanks Connor Davenport.

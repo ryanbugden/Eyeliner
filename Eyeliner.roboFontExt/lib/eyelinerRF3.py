@@ -10,22 +10,6 @@ rad_base = getDefault("glyphViewOncurvePointsSize") * 1.75
 
 class Eyeliner():
 
-    '''
-    Adds a little eye around points and anchors that are on the
-    vertical font dimensions, guidelines, or edges of blue zones.
-
-    Ryan Bugden
-    v1.2.9 : 2021.03.17
-    v1.2.8 : 2021.01.30
-    v1.2.7 : 2020.09.14
-    v1.2.5 : 2020.07.15
-    v1.2.1 : 2020.04.03
-    v1.2.0 : 2020.03.26
-    v1.1.1 : 2020.01.27
-    v1.0.0 : 2020.01.24
-    v0.9.0 : 2019.06.04
-    '''
-
     def __init__(self):
 
         self.col_font_dim = self.getFlattenedAlpha(
@@ -73,14 +57,19 @@ class Eyeliner():
         self.radius = rad_base * self.scale
 
         if self.g is not None:
+            onCurves_on = getGlyphViewDisplaySettings()['On Curve Points']
+            anchors_on = getGlyphViewDisplaySettings()['Anchors']
+            
             # on-curve points
-            for c in self.g:
-                for pt in c.points:
-                    if pt.type != 'offcurve':
-                        self.checkMetrics(pt.x, pt.y)
+            if onCurves_on is True:
+                for c in self.g:
+                    for pt in c.points:
+                        if pt.type != 'offcurve':
+                            self.checkMetrics(pt.x, pt.y)
             # anchors
-            for a in self.g.anchors:
-                self.checkMetrics(a.x, a.y)
+            if anchors_on is True:
+                for a in self.g.anchors:
+                    self.checkMetrics(a.x, a.y)
 
     def checkMetrics(self, x, y):
 
@@ -100,10 +89,7 @@ class Eyeliner():
         blue_vals = self.f.info.postscriptBlueValues + self.f.info.postscriptOtherBlues
         fBlue_vals = self.f.info.postscriptFamilyBlues + self.f.info.postscriptFamilyOtherBlues
         blues_on = getGlyphViewDisplaySettings()['Blues']
-        try:
-            fBlues_on = getGlyphViewDisplaySettings()['Family Blues']
-        except KeyError:  # RF 4
-            fBlues_on = getGlyphViewDisplaySettings()['FamilyBlues']
+        fBlues_on = getGlyphViewDisplaySettings()['Family Blues']
 
         if self.g is not None:
 

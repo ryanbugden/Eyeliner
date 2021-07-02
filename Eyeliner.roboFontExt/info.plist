@@ -13,7 +13,7 @@
 	<key>launchAtStartUp</key>
 	<integer>1</integer>
 	<key>mainScript</key>
-	<string>Eyeliner.py</string>
+	<string>usher.py</string>
 	<key>name</key>
 	<string>Eyeliner</string>
 	<key>requiresVersionMajor</key>
@@ -23,6 +23,6 @@
 	<key>timeStamp</key>
 	<real>1612050013.414182</real>
 	<key>version</key>
-	<string>1.2.9</string>
+	<string>2.0.0</string>
 </dict>
 </plist>
