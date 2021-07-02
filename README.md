@@ -14,7 +14,7 @@ Eyeliner shapes will match the appropriate color of whatever line it's aligning 
 
 ### Versions
 
-	2.0.0 2021.07.02  Rewritten for RoboFont 4. Eyes are crispy now!     
+	2.0.1 2021.07.02  Rewritten for RoboFont 4. Eyes are crispy now!     
 	                  Support for changing anchor/on-curve display settings.       
 	1.2.9 2021.03.17  Dodging tracebacks.                              
 	                  Thanks Jackson Showalter-Cavanaugh.

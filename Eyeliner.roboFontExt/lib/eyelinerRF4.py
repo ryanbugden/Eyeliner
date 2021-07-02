@@ -11,12 +11,6 @@ class Eyeliner(Subscriber):
 
     def build(self):
         
-        self.bgContainer = CurrentGlyphWindow().extensionContainer(
-            identifier="com.roboFont.Eyeliner.background", 
-            location="background", 
-            clear=True
-            )
-        
         try:
             self.g = CurrentGlyph()
         except:
@@ -55,6 +49,13 @@ class Eyeliner(Subscriber):
         b3 = b2 + (b - b2) * a
 
         return (r3, g3, b3, 1)
+        
+    def glyphEditorDidOpen(self, info):
+        self.bgContainer = info["glyphEditor"].extensionContainer(
+            identifier="com.roboFont.Eyeliner.background", 
+            location="background", 
+            clear=True
+            )
 
     def glyphEditorGlyphDidChange(self, info):
         self.g = info["glyph"]
@@ -76,27 +77,23 @@ class Eyeliner(Subscriber):
         if self.g == None:
             return
         self.f = self.g.font
-        if self.f == None:
-            return
             
         self.bgContainer.clearSublayers()
         self.radius = (getDefault("glyphViewOncurvePointsSize") * 1.75) / self.scale
 
-        if self.g is not None:
-            
-            onCurves_on = getGlyphViewDisplaySettings()['OnCurvePoints']
-            anchors_on = getGlyphViewDisplaySettings()['Anchors']
-            
-            # on-curve points
-            if onCurves_on is True:
-                for c in self.g:
-                    for pt in c.points:
-                        if pt.type != 'offcurve':
-                            self.checkMetrics(pt.x, pt.y)
-            # anchors
-            if anchors_on is True:
-                for a in self.g.anchors:
-                    self.checkMetrics(a.x, a.y)
+        onCurves_on = getGlyphViewDisplaySettings()['OnCurvePoints']
+        anchors_on = getGlyphViewDisplaySettings()['Anchors']
+        
+        # on-curve points
+        if onCurves_on is True:
+            for c in self.g:
+                for pt in c.points:
+                    if pt.type != 'offcurve':
+                        self.checkMetrics(pt.x, pt.y)
+        # anchors
+        if anchors_on is True:
+            for a in self.g.anchors:
+                self.checkMetrics(a.x, a.y)
                 
                 
     def checkMetrics(self, x, y):

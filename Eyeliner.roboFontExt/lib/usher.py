@@ -2,7 +2,7 @@
 # vertical font dimensions, guidelines, or edges of blue zones.
 
 # Ryan Bugden
-# v2.0.0 : 2021.07.02
+# v2.0.1 : 2021.07.02
 # v1.2.9 : 2021.03.17
 # v1.2.8 : 2021.01.30
 # v1.2.7 : 2020.09.14
