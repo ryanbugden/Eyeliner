@@ -20,6 +20,12 @@ class Eyeliner(Subscriber):
             self.scale = CurrentGlyphWindow().getGlyphView().scale()
         except:
             self.scale = 1
+            
+        self.bgContainer = self.getGlyphEditor().extensionContainer(
+            identifier="com.roboFont.Eyeliner.background", 
+            location="background", 
+            clear=True
+            )
 
         self.col_font_dim = self.getFlattenedAlpha(
             NSColorToRgba(getDefaultColor("glyphViewMetricsColor")))
@@ -49,13 +55,6 @@ class Eyeliner(Subscriber):
         b3 = b2 + (b - b2) * a
 
         return (r3, g3, b3, 1)
-        
-    def glyphEditorDidOpen(self, info):
-        self.bgContainer = info["glyphEditor"].extensionContainer(
-            identifier="com.roboFont.Eyeliner.background", 
-            location="background", 
-            clear=True
-            )
 
     def glyphEditorGlyphDidChange(self, info):
         self.g = info["glyph"]
