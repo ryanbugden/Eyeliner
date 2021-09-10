@@ -28,7 +28,7 @@ class Eyeliner(Subscriber):
             )
 
         self.col_font_dim = self.getFlattenedAlpha(
-            NSColorToRgba(getDefaultColor("glyphViewMetricsColor")))
+            NSColorToRgba(getDefaultColor("glyphViewFontMetricsStrokeColor")))
         self.col_glob_guides = self.getFlattenedAlpha(
             NSColorToRgba(getDefaultColor("glyphViewGlobalGuidesColor")))
         self.col_loc_guides = self.getFlattenedAlpha(
