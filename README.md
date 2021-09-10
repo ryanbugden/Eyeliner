@@ -14,6 +14,7 @@ Eyeliner shapes will match the appropriate color of whatever line it's aligning 
 
 ### Versions
 
+	2.0.3 2021.09.10  Update font dimensions color preference key to follow RF4.    
 	2.0.2 2021.07.20  Correctly set background container.    
   	2.0.1 2021.07.02  Rewritten for RoboFont 4. Eyes are crispy now!     
 	                  Support for changing anchor/on-curve display settings.       
