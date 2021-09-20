@@ -6,27 +6,65 @@ from lib.tools.defaults import getDefaultColor, getDefault
 from fontTools.misc.fixedTools import otRound
 from lib.tools.misc import NSColorToRgba
 
+import merz
+from merz.tools.drawingTools import NSImageDrawingTools
+
+
+rad_base = getDefault("glyphViewOncurvePointsSize") * 1.75 # changing this value will impact how large the eye is, relative to your on-curve pt size
+
+def eyelinerSymbolFactory(
+        radius,
+        stretch=0.7,
+        strokeColor=(0, 0, 0, 1),
+        strokeWidth=1
+        ):
+    # calcute the width and height
+    width = radius * 6 * stretch * 2 + strokeWidth * 2
+    height = radius * 2 + strokeWidth * 2
+    # create a image draw bot 
+    bot = NSImageDrawingTools((width, height))
+    # get a pen
+    pen = bot.BezierPath()
+    # draw the eye
+    pen.moveTo((6 * radius * stretch, 0))
+    pen.curveTo(
+        (2 * radius * stretch, 0),
+        (1.25 * radius * stretch, -radius),
+        (0, -radius))
+    pen.curveTo(
+        (-1.25 * radius * stretch, -radius),
+        (-2 * radius * stretch, 0),
+        (-6 * radius * stretch, 0))
+    pen.curveTo(
+        (-2 * radius * stretch, 0),
+        (-1.25 * radius * stretch, radius),
+        (0, radius))
+    pen.curveTo(
+        (1.25 * radius * stretch, radius),
+        (2 * radius * stretch, 0),
+        (6 * radius * stretch, 0))
+    pen.closePath()
+
+    bot.fill(None)
+    bot.stroke(*strokeColor)
+    bot.strokeWidth(strokeWidth)
+    bot.translate(width / 2, height / 2)
+    bot.drawPath(pen)
+    # return the image
+    return bot.getImage()
+    
+merz.SymbolImageVendor.registerImageFactory("eyeliner.eye", eyelinerSymbolFactory)
+
+
 
 class Eyeliner(Subscriber):
 
-    def build(self):
-        
+    def started(self):
         try:
             self.g = CurrentGlyph()
         except:
             self.g = None
             
-        try:
-            self.scale = CurrentGlyphWindow().getGlyphView().scale()
-        except:
-            self.scale = 1
-            
-        self.bgContainer = self.getGlyphEditor().extensionContainer(
-            identifier="com.roboFont.Eyeliner.background", 
-            location="background", 
-            clear=True
-            )
-
         self.col_font_dim = self.getFlattenedAlpha(
             NSColorToRgba(getDefaultColor("glyphViewFontMetricsStrokeColor")))
         self.col_glob_guides = self.getFlattenedAlpha(
@@ -66,11 +104,14 @@ class Eyeliner(Subscriber):
         
     def glyphEditorDidSetGlyph(self, info):
         self.g = info["glyph"]
-        self.beginDrawing()            
-            
-    def glyphEditorWillScale(self, info):
-        self.scale = info["scale"]
-        self.beginDrawing()
+        self.beginDrawing() 
+        
+    def glyphEditorDidOpen(self, info):
+        self.bgContainer = info['glyphEditor'].extensionContainer(
+            identifier="eyeliner.background", 
+            location="background", 
+            clear=True
+            )
         
     def beginDrawing(self):
         if self.g == None:
@@ -78,7 +119,6 @@ class Eyeliner(Subscriber):
         self.f = self.g.font
             
         self.bgContainer.clearSublayers()
-        self.radius = (getDefault("glyphViewOncurvePointsSize") * 1.75) / self.scale
 
         onCurves_on = getGlyphViewDisplaySettings()['OnCurvePoints']
         anchors_on = getGlyphViewDisplaySettings()['Anchors']
@@ -177,56 +217,18 @@ class Eyeliner(Subscriber):
                     color = self.col_loc_guides
                 self.drawEye(x, y, color, angle)
                 
+                
     def drawEye(self, x, y, color, angle):
-        pathLayer = self.bgContainer.appendPathSublayer(
-            strokeColor=color,
-            fillColor=None,
-            strokeWidth=1
-            )
             
-        pen = pathLayer.getPen()
-        stretch = 0.7
-        
-        if angle == 0 or angle == 180:
-            pen.moveTo(
-                (x + 6 * self.radius * stretch, y + 0))
-            pen.curveTo(
-                (x + 2 * self.radius * stretch, y + 0),
-                (x + 1.25 * self.radius * stretch, y + -self.radius),
-                (x + 0, y + -self.radius))
-            pen.curveTo(
-                (x + -1.25 * self.radius * stretch, y + -self.radius),
-                (x + -2 * self.radius, y + 0),
-                (x + -6 * self.radius * stretch, y + 0))
-            pen.curveTo(
-                (x + -2 * self.radius * stretch, y + 0),
-                (x + -1.25 * self.radius * stretch, y + self.radius),
-                (x + 0, y + self.radius))
-            pen.curveTo(
-                (x + 1.25 * self.radius * stretch, y + self.radius),
-                (x + 2 * self.radius * stretch, y + 0),
-                (x + 6 * self.radius * stretch, y + 0))
-            pen.closePath()
-        else:
-            pen.moveTo(
-                (x + 0, y + 6 * self.radius * stretch))
-            pen.curveTo(
-                (x + 0, y + 2 * self.radius * stretch),
-                (x + -self.radius, y + 1.25 * self.radius * stretch),
-                (x + -self.radius, y + 0))
-            pen.curveTo(
-                (x + -self.radius, y + -1.25 * self.radius * stretch),
-                (x + 0, y + -2 * self.radius),
-                (x + 0, y + -6 * self.radius * stretch))
-            pen.curveTo(
-                (x + 0, y + -2 * self.radius * stretch),
-                (x + self.radius, y + -1.25 * self.radius * stretch),
-                (x + self.radius, y + 0))
-            pen.curveTo(
-                (x + self.radius, y + 1.25 * self.radius * stretch),
-                (x + 0, y + 2 * self.radius * stretch),
-                (x + 0, y + 6 * self.radius * stretch))
-            pen.closePath()
+        eye = self.bgContainer.appendSymbolSublayer(
+                position        = (x, y),
+                rotation        = angle,
+                imageSettings   = dict(
+                                    name        = "eyeliner.eye",
+                                    radius      = rad_base, 
+                                    strokeColor = color       
+                                    )
+                )
         
         
 registerGlyphEditorSubscriber(Eyeliner)
