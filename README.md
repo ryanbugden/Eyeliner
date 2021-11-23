@@ -14,6 +14,7 @@ Eyeliner shapes will match the appropriate color of whatever line it's aligning 
 
 ### Versions
 
+	2.1.1 2021.11.23  Darken blue zone eyes for more clarity. 
 	2.1.0 2021.09.20  Use Merz more appropriately, overcoming a bunch of bugs.
 	                  Thanks Frederik Berlaen. 
 	2.0.3 2021.09.10  Update font dimensions color preference key to follow RF4.    

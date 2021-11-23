@@ -5,6 +5,7 @@ from mojo.UI import getGlyphViewDisplaySettings
 from lib.tools.defaults import getDefaultColor, getDefault
 from fontTools.misc.fixedTools import otRound
 from lib.tools.misc import NSColorToRgba
+from colorsys import rgb_to_hsv, hsv_to_rgb
 
 import merz
 from merz.tools.drawingTools import NSImageDrawingTools
@@ -71,12 +72,9 @@ class Eyeliner(Subscriber):
             NSColorToRgba(getDefaultColor("glyphViewGlobalGuidesColor")))
         self.col_loc_guides = self.getFlattenedAlpha(
             NSColorToRgba(getDefaultColor("glyphViewLocalGuidesColor")))
-        r, g, b, a = NSColorToRgba(
-            getDefaultColor("glyphViewBluesColor"))
-        self.col_blues = (r, g, b, 1)
-        r, g, b, a = NSColorToRgba(
-            getDefaultColor("glyphViewFamilyBluesColor"))
-        self.col_fBlues = (r, g, b, 1)
+            
+        self.col_blues = self.getDarkenedBlue(self.getFlattenedAlpha(NSColorToRgba(getDefaultColor("glyphViewBluesColor"))))
+        self.col_fBlues = self.getDarkenedBlue(self.getFlattenedAlpha(NSColorToRgba(getDefaultColor("glyphViewFamilyBluesColor"))))
         
         self.beginDrawing()
         
@@ -93,6 +91,15 @@ class Eyeliner(Subscriber):
         b3 = b2 + (b - b2) * a
 
         return (r3, g3, b3, 1)
+        
+    def getDarkenedBlue(self, color):
+        
+        # darkened version of non-transparent blue zone color preference
+        r, g, b, a = color
+        h, s, v = rgb_to_hsv(r*255, g*255, b*255)
+        r, g, b = hsv_to_rgb(h, s + (1 - s)/2, v*0.6)
+        
+        return (r/255, g/255, b/255, 1)
 
     def glyphEditorGlyphDidChange(self, info):
         self.g = info["glyph"]
@@ -108,8 +115,8 @@ class Eyeliner(Subscriber):
         
     def glyphEditorDidOpen(self, info):
         self.bgContainer = info['glyphEditor'].extensionContainer(
-            identifier="eyeliner.background", 
-            location="background", 
+            identifier="eyeliner.foreground", 
+            location="foreground", 
             clear=True
             )
         
@@ -226,7 +233,7 @@ class Eyeliner(Subscriber):
                 imageSettings   = dict(
                                     name        = "eyeliner.eye",
                                     radius      = rad_base, 
-                                    strokeColor = color       
+                                    strokeColor = color 
                                     )
                 )
         
