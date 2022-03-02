@@ -14,6 +14,7 @@ Eyeliner shapes will match the appropriate color of whatever line it's aligning 
 
 ### Versions
 
+	2.2.1 2022.03.02  Debug 
 	2.2.0 2022.03.02  Support for angled guidelines. 
 	                  Thanks for the math, Erik van Blokland!
 	2.1.1 2021.11.23  Darken blue zone eyes for more clarity. 

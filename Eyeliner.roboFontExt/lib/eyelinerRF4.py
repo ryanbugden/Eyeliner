@@ -77,7 +77,6 @@ def isOnDiagonal(pta, angle, ptb, tol=0.1):
     return False
 
 
-
 class Eyeliner(Subscriber):
 
     def started(self):
@@ -170,14 +169,14 @@ class Eyeliner(Subscriber):
         # get guide x's and y's
         f_guide_xs    = {}
         f_guide_ys    = {}
-        f_guide_diags = {}
+        f_guide_diags = []
         for guideline in self.f.guidelines:
             if guideline.angle in [0, 180]:
                 f_guide_ys[otRound(guideline.y)] = guideline.color
             elif guideline.angle in [90, 270]:
                 f_guide_xs[otRound(guideline.x)] = guideline.color
             else:
-                f_guide_diags[(guideline.x,guideline.y)] = [guideline.angle, guideline.color]
+                f_guide_diags.append(guideline)
         # get blue y's and whether they're set to be displayed
         blue_vals = self.f.info.postscriptBlueValues + self.f.info.postscriptOtherBlues
         fBlue_vals = self.f.info.postscriptFamilyBlues + self.f.info.postscriptFamilyOtherBlues
@@ -189,14 +188,14 @@ class Eyeliner(Subscriber):
 
             g_guide_xs    = {}
             g_guide_ys    = {}
-            g_guide_diags = {}
+            g_guide_diags = []
             for guideline in self.g.guidelines:
                 if guideline.angle in [0, 180]:
                     g_guide_ys[otRound(guideline.y)] = guideline.color
                 elif guideline.angle in [90, 270]:
                     g_guide_xs[otRound(guideline.x)] = guideline.color
                 else:
-                    g_guide_diags[(guideline.x,guideline.y)] = [guideline.angle, guideline.color]
+                    g_guide_diags.append(guideline)
 
             angle = 0
             color = None
@@ -250,22 +249,16 @@ class Eyeliner(Subscriber):
                 self.drawEye(x, y, color, angle)
 
             # ==== DIAGONAL STUFF ==== #
-            for gd_x, gd_y in g_guide_diags.keys():
-                angle = g_guide_diags[(gd_x, gd_y)][0]
-                result = isOnDiagonal((gd_x, gd_y), angle, (x, y))
+            for gd in g_guide_diags + f_guide_diags:
+                color = gd.color
+                if color is None:
+                    if gd in g_guide_diags:
+                        color = self.col_loc_guides 
+                    else:
+                        color = self.col_glob_guides 
+                angle = gd.angle
+                result = isOnDiagonal((gd.x, gd.y), angle, (x, y))
                 if result:
-                    color = g_guide_diags[(gd_x, gd_y)][1]
-                    if color is None:
-                        color = self.col_loc_guides
-                    self.drawEye(x, y, color, angle)
-
-            for gd_x, gd_y in f_guide_diags.keys():
-                angle = f_guide_diags[(gd_x, gd_y)][0]
-                result = isOnDiagonal((gd_x, gd_y), angle, (x, y))
-                if result:
-                    color = f_guide_diags[(gd_x, gd_y)][1]
-                    if color is None:
-                        color = self.col_glob_guides
                     self.drawEye(x, y, color, angle)
                 
                 
