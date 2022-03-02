@@ -1,14 +1,14 @@
-from mojo.subscriber import Subscriber, registerGlyphEditorSubscriber
-from mojo.UI import CurrentGlyphWindow
+from mojo.UI import CurrentGlyphWindow, getGlyphViewDisplaySettings
 
-from mojo.UI import getGlyphViewDisplaySettings
-from lib.tools.defaults import getDefaultColor, getDefault
+import math
 from fontTools.misc.fixedTools import otRound
 from lib.tools.misc import NSColorToRgba
+from lib.tools.defaults import getDefaultColor, getDefault
 from colorsys import rgb_to_hsv, hsv_to_rgb
 
 import merz
 from merz.tools.drawingTools import NSImageDrawingTools
+from mojo.subscriber import Subscriber, registerGlyphEditorSubscriber
 
 
 rad_base = getDefault("glyphViewOncurvePointsSize") * 1.75 # changing this value will impact how large the eye is, relative to your on-curve pt size
@@ -49,12 +49,32 @@ def eyelinerSymbolFactory(
     bot.fill(None)
     bot.stroke(*strokeColor)
     bot.strokeWidth(strokeWidth)
-    bot.translate(width / 2, height / 2)
+    bot.translate(width / 2 + 0.25, height / 2 + 0.25)
     bot.drawPath(pen)
     # return the image
     return bot.getImage()
     
 merz.SymbolImageVendor.registerImageFactory("eyeliner.eye", eyelinerSymbolFactory)
+
+
+def isOnDiagonal(pta, angle, ptb, tol=0.1):
+    if pta == ptb: 
+        return True
+    ar = math.radians(angle)%math.pi
+    ca = math.cos(ar)
+    sa = math.sin(ar)
+    if not math.isclose(ca,0,abs_tol=tol) and not math.isclose(sa,0,abs_tol=tol):
+        # diagonal, distances for x and y should match
+        tdx = (pta[0]-ptb[0])/ca
+        tdy = (pta[1]-ptb[1])/sa
+        return math.isclose(tdx, tdy, abs_tol=2)
+    elif math.isclose(ca,1,abs_tol=tol) and math.isclose(sa,0,abs_tol=tol):
+        # horizontal, so y should match
+        return math.isclose(pta[1], ptb[1], abs_tol=tol)
+    elif math.isclose(ca,0,abs_tol=tol) and math.isclose(sa,1,abs_tol=tol):
+        # vertical, so x should match
+        return math.isclose(pta[0], ptb[0], abs_tol=tol)
+    return False
 
 
 
@@ -148,13 +168,16 @@ class Eyeliner(Subscriber):
             self.f.info.descender, 0, self.f.info.xHeight,
             self.f.info.ascender, self.f.info.capHeight]
         # get guide x's and y's
-        f_guide_xs = {}
-        f_guide_ys = {}
+        f_guide_xs    = {}
+        f_guide_ys    = {}
+        f_guide_diags = {}
         for guideline in self.f.guidelines:
             if guideline.angle in [0, 180]:
                 f_guide_ys[otRound(guideline.y)] = guideline.color
             elif guideline.angle in [90, 270]:
                 f_guide_xs[otRound(guideline.x)] = guideline.color
+            else:
+                f_guide_diags[(guideline.x,guideline.y)] = [guideline.angle, guideline.color]
         # get blue y's and whether they're set to be displayed
         blue_vals = self.f.info.postscriptBlueValues + self.f.info.postscriptOtherBlues
         fBlue_vals = self.f.info.postscriptFamilyBlues + self.f.info.postscriptFamilyOtherBlues
@@ -164,13 +187,16 @@ class Eyeliner(Subscriber):
 
         if self.g is not None:
 
-            g_guide_xs = {}
-            g_guide_ys = {}
+            g_guide_xs    = {}
+            g_guide_ys    = {}
+            g_guide_diags = {}
             for guideline in self.g.guidelines:
                 if guideline.angle in [0, 180]:
                     g_guide_ys[otRound(guideline.y)] = guideline.color
                 elif guideline.angle in [90, 270]:
                     g_guide_xs[otRound(guideline.x)] = guideline.color
+                else:
+                    g_guide_diags[(guideline.x,guideline.y)] = [guideline.angle, guideline.color]
 
             angle = 0
             color = None
@@ -209,7 +235,6 @@ class Eyeliner(Subscriber):
 
             # ==== VERTICAL STUFF ==== #
             angle = 90
-
             # global vertical guides
             if otRound(x) in f_guide_xs.keys():
                 color = f_guide_xs[otRound(x)]
@@ -223,6 +248,25 @@ class Eyeliner(Subscriber):
                 if color is None:
                     color = self.col_loc_guides
                 self.drawEye(x, y, color, angle)
+
+            # ==== DIAGONAL STUFF ==== #
+            for gd_x, gd_y in g_guide_diags.keys():
+                angle = g_guide_diags[(gd_x, gd_y)][0]
+                result = isOnDiagonal((gd_x, gd_y), angle, (x, y))
+                if result:
+                    color = g_guide_diags[(gd_x, gd_y)][1]
+                    if color is None:
+                        color = self.col_loc_guides
+                    self.drawEye(x, y, color, angle)
+
+            for gd_x, gd_y in f_guide_diags.keys():
+                angle = f_guide_diags[(gd_x, gd_y)][0]
+                result = isOnDiagonal((gd_x, gd_y), angle, (x, y))
+                if result:
+                    color = f_guide_diags[(gd_x, gd_y)][1]
+                    if color is None:
+                        color = self.col_glob_guides
+                    self.drawEye(x, y, color, angle)
                 
                 
     def drawEye(self, x, y, color, angle):

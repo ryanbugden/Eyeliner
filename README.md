@@ -1,7 +1,7 @@
 # Eyeliner
 
 
-RoboFont extension that highlights points and anchors that are aligned with vertical font dimensions, 0°/90° guides, or blue zones (if set to be visible). Rest assured that your points are aligned, without having to zoom in and check (;
+RoboFont extension that highlights points and anchors that are aligned with vertical font dimensions, guidelines, or blue zones (if set to be visible). Rest assured that your points are aligned, without having to zoom in and check (;
 
 Eyeliner shapes will match the appropriate color of whatever line it's aligning to, based on the color preferences you have set in RoboFont.
 
@@ -14,6 +14,8 @@ Eyeliner shapes will match the appropriate color of whatever line it's aligning 
 
 ### Versions
 
+	2.2.0 2022.03.02  Support for angled guidelines. 
+	                  Thanks for the math, Erik van Blokland!
 	2.1.1 2021.11.23  Darken blue zone eyes for more clarity. 
 	2.1.0 2021.09.20  Use Merz more appropriately, overcoming a bunch of bugs.
 	                  Thanks Frederik Berlaen. 
