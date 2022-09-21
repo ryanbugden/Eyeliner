@@ -4,6 +4,9 @@
 from mojo.roboFont import version
 
 if version >= "4.0":
-    from eyelinerRF4 import *
+    if version >= "4.2":
+        from eyelinerRF4_2 import *
+    else:
+        from eyelinerRF4 import *
 else:
     from eyelinerRF3 import *
