@@ -13,7 +13,7 @@ Eyeliner shapes will match the appropriate color of whatever line it's aligning 
 
 
 ### Versions
-
+	2.3.0 2023.03.08  Support new naming for "glyphViewOnCurvePointsSize" default naming. 
 	2.3.0 2022.09.21  New framework for setting eye color (waiting on z-index infrastructure). 
 	                  Fix display settings bug.
 	2.2.1 2022.03.02  Debug 
