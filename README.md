@@ -1,18 +1,16 @@
 # Eyeliner
 
+<img src="./_images/Eyeliner_mechanicIcon.png"  width="80">
 
 RoboFont extension that highlights points and anchors that are aligned with vertical font dimensions, guidelines, or blue zones (if set to be visible). Rest assured that your points are aligned, without having to zoom in and check (;
 
-Eyeliner shapes will match the appropriate color of whatever line it's aligning to, based on the color preferences you have set in RoboFont.
-
-
-![](./_images/Eyeliner_mechanicIcon_small.png)
+Eyeliner shapes will match the appropriate color of whatever line it’s aligning to, based on the color preferences you have set in RoboFont.
 
 ![](./_images/Eyeliner_demo.png)
 
-
-
 ### Versions
+```
+	2.3.2 2023.05.31  Move eyes to foreground. Higher tolerance for diagonals. Clean up code. 
 	2.3.1 2023.03.08  Support new naming for "glyphViewOnCurvePointsSize" default key. 
 	2.3.0 2022.09.21  New framework for setting eye color (waiting on z-index infrastructure). 
 	                  Fix display settings bug.
@@ -42,3 +40,4 @@ Eyeliner shapes will match the appropriate color of whatever line it's aligning 
 	1.1.1 2020.01.27  Support for blue zone edges. 
 	                  Thanks for the suggestion, Jeremy Mickel.
 	1.0.0 2020.01.24  Initial release
+```
