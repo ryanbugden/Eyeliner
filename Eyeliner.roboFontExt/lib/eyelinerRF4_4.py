@@ -1,12 +1,15 @@
 import math
 from colorsys import rgb_to_hsv, hsv_to_rgb
-from lib.tools.misc import NSColorToRgba
-from lib.tools.defaults import getDefaultColor, getDefault
+from lib.tools.defaults import getDefault
+from fontTools.misc.fixedTools import otRound
+
 from mojo.subscriber import Subscriber, registerGlyphEditorSubscriber
+from  mojo.tools import IntersectGlyphWithLine
 from mojo.UI import CurrentGlyphWindow, getGlyphViewDisplaySettings
+
 import merz
 from merz.tools.drawingTools import NSImageDrawingTools
-from fontTools.misc.fixedTools import otRound
+
 
 
 RAD_BASE = getDefault("glyphViewOnCurvePointsSize") * 1.75 # changing this value will impact how large the eye is, relative to your on-curve pt size
@@ -97,6 +100,10 @@ def is_on_diagonal(pta, angle, ptb, tol=0.11):
 
 class Eyeliner(Subscriber):
 
+    def build(self):
+        self.slice_tool_active = False
+        self.slice_coords = []
+
 
     def started(self):
         try:
@@ -113,9 +120,25 @@ class Eyeliner(Subscriber):
 
         self.begin_drawing()
         
-
+        
     def destroy(self):
         self.container.clearSublayers()
+        
+        
+    def roboFontDidChangePreferences(self, info):
+        self.update_color_prefs()
+
+
+    def update_color_prefs(self):
+        self.gvbc = getDefault("glyphViewBackgroundColor")
+        self.gvmc = getDefault("glyphViewMarginColor")
+            
+        self.col_font_dim = self.get_flattened_alpha(getDefault("glyphViewFontMetricsStrokeColor"))
+        self.col_glob_guides = self.get_flattened_alpha(getDefault("glyphViewGlobalGuidesColor"))
+        self.col_loc_guides = self.get_flattened_alpha(getDefault("glyphViewLocalGuidesColor"))
+
+        self.col_blues = self.get_darkened_blue(self.get_flattened_alpha(getDefault("glyphViewBluesColor")))
+        self.col_fblues = self.get_darkened_blue(self.get_flattened_alpha(getDefault("glyphViewFamilyBluesColor")))
 
 
     def get_flattened_alpha(self, color):
@@ -125,7 +148,7 @@ class Eyeliner(Subscriber):
         r3 = r2 + (r - r2) * a
         g3 = g2 + (g - g2) * a
         b3 = b2 + (b - b2) * a
-
+        
         return (r3, g3, b3, 1)
         
 
@@ -142,36 +165,37 @@ class Eyeliner(Subscriber):
         self.g = info["glyph"]
         self.begin_drawing()
         
-
-    def glyphEditorDidMouseDrag(self, info):
-        self.g = info["glyph"]
-        self.begin_drawing()
         
-
     def glyphEditorDidSetGlyph(self, info):
         self.g = info["glyph"]
         self.begin_drawing() 
         
-
-    def roboFontDidChangePreferences(self, info):
-        self.update_color_prefs()
-
-
-    def update_color_prefs(self):
-        self.gvbc = NSColorToRgba(
-            getDefaultColor("glyphViewBackgroundColor"))
-        self.gvmc = NSColorToRgba(
-            getDefaultColor("glyphViewMarginColor"))
-            
-        self.col_font_dim = self.get_flattened_alpha(
-            NSColorToRgba(getDefaultColor("glyphViewFontMetricsStrokeColor")))
-        self.col_glob_guides = self.get_flattened_alpha(
-            NSColorToRgba(getDefaultColor("glyphViewGlobalGuidesColor")))
-        self.col_loc_guides = self.get_flattened_alpha(
-            NSColorToRgba(getDefaultColor("glyphViewLocalGuidesColor")))
-
-        self.col_blues = self.get_darkened_blue(self.get_flattened_alpha(NSColorToRgba(getDefaultColor("glyphViewBluesColor"))))
-        self.col_fblues = self.get_darkened_blue(self.get_flattened_alpha(NSColorToRgba(getDefaultColor("glyphViewFamilyBluesColor"))))
+        
+    def glyphEditorDidMouseDown(self, info):
+        '''Support for slice tool eyes'''
+        lle = info['lowLevelEvents'][0]
+        tool = lle ['tool']
+        self.down_point = lle['point']
+        if tool.__module__ == "lib.eventTools.sliceTool":
+            self.slice_tool_active = True
+        else:
+            self.slice_tool_active = False
+        
+        
+    def glyphEditorDidMouseDrag(self, info):
+        self.g = info["glyph"]
+        
+        self.slice_coords = []
+        if self.slice_tool_active:
+            slice_line = (self.down_point, info['lowLevelEvents'][0]['point'])
+            intersects = IntersectGlyphWithLine(self.g, slice_line, canHaveComponent=False, addSideBearings=False)
+            for inter in intersects:
+                x, y = otRound(inter[0]), otRound(inter[1])
+                self.slice_coords.append((x,y))
+        else:
+            self.slice_coords = []
+        
+        self.begin_drawing()
         
 
     def begin_drawing(self):
@@ -182,7 +206,7 @@ class Eyeliner(Subscriber):
         self.container.clearSublayers()
 
         oncurves_on = getGlyphViewDisplaySettings().get('OnCurvePoints')
-        anchors_on = getGlyphViewDisplaySettings().get('Anchors')
+        anchors_on  = getGlyphViewDisplaySettings().get('Anchors')
         
         # On-curve points
         if oncurves_on is True:
@@ -195,12 +219,18 @@ class Eyeliner(Subscriber):
             for a in self.g.anchors:
                 self.check_metrics(a.x, a.y)
                 
+        # Slice tool intersections
+        if self.slice_tool_active:
+            for (x,y) in self.slice_coords:
+                self.check_metrics(x, y)
+                
                 
     def check_metrics(self, x, y):
         # Get font dimensions y's
         font_dim = [
             self.f.info.descender, 0, self.f.info.xHeight,
-            self.f.info.ascender, self.f.info.capHeight]
+            self.f.info.ascender, self.f.info.capHeight
+            ]
         
         # Get guide x's and y's
         f_guide_xs    = {}
