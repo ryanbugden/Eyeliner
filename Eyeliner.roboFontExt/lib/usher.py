@@ -5,7 +5,7 @@ from mojo.roboFont import version
 
 if version >= "4.0":
 
-    if version >= "4.4b": # syntax change for glyphViewOnCurvePointsSize
+    if version >= "4.4b":  # Syntax change for glyphViewOnCurvePointsSize
         from eyelinerRF4_4 import *
     elif version >= "4.2":
         from eyelinerRF4_2 import *
