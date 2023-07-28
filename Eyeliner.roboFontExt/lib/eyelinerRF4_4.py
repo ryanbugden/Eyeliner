@@ -223,30 +223,30 @@ class Eyeliner(Subscriber):
             for c in self.g.contours:
                 for pt in c.points:
                     if pt.type != 'offcurve':
-                        self.check_metrics(pt.x, pt.y)
+                        self.check_alignment(pt.x, pt.y)
                         real_points.append((pt.x, pt.y))
                         
         # Anchors (Use un-decomposed glyph)
         if anchors_on is True:
             for a in self.g.anchors:
-                self.check_metrics(a.x, a.y)
+                self.check_alignment(a.x, a.y)
                 
         # Slice tool intersections
         if self.slice_tool_active:
             for (x,y) in self.slice_coords:
-                self.check_metrics(x, y)
+                self.check_alignment(x, y)
                 
         # Component points
         for c in decomp_glyph.contours:
             for pt in c.points:
                 if pt.type != 'offcurve':
                     if (pt.x, pt.y) not in real_points:
-                        if self.check_metrics(pt.x, pt.y) == True:
+                        if self.check_alignment(pt.x, pt.y) == True:
                             self.draw_component_point(pt.x, pt.y)
                 
                 
-    def check_metrics(self, x, y):
-        metrics_match = False
+    def check_alignment(self, x, y):
+        alignment_match = False
         
         # Get font dimensions y's
         font_dim = [
@@ -296,7 +296,7 @@ class Eyeliner(Subscriber):
                 if color is None:
                     color = self.col_glob_guides
                 self.draw_eye(x, y, color, angle)
-                metrics_match = True
+                alignment_match = True
 
             # Local horizontal guides
             elif otRound(y) in g_guide_ys.keys():
@@ -304,13 +304,13 @@ class Eyeliner(Subscriber):
                 if color is None:
                     color = self.col_loc_guides
                 self.draw_eye(x, y, color, angle)
-                metrics_match = True
+                alignment_match = True
 
             # Font dimensions
             elif otRound(y) in font_dim:
                 color = self.col_font_dim
                 self.draw_eye(x, y, color, angle)
-                metrics_match = True
+                alignment_match = True
 
             # Blues
             elif otRound(y) in blue_vals:
@@ -323,7 +323,7 @@ class Eyeliner(Subscriber):
                 if fblues_on is True:
                     color = self.col_fblues
                     self.draw_eye(x, y, color, angle)
-                    metrics_match = True
+                    alignment_match = True
 
             # ==== VERTICAL STUFF ==== #
             angle = 90
@@ -333,7 +333,7 @@ class Eyeliner(Subscriber):
                 if color is None:
                     color = self.col_glob_guides
                 self.draw_eye(x, y, color, angle)
-                metrics_match = True
+                alignment_match = True
 
             # Local vertical guides
             elif otRound(x) in g_guide_xs.keys():
@@ -341,7 +341,7 @@ class Eyeliner(Subscriber):
                 if color is None:
                     color = self.col_loc_guides
                 self.draw_eye(x, y, color, angle)
-                metrics_match = True
+                alignment_match = True
 
             # ==== DIAGONAL STUFF ==== #
             for gd in g_guide_diags + f_guide_diags:
@@ -357,9 +357,9 @@ class Eyeliner(Subscriber):
                     ## Tested code to clean up the diagonal eye presentation
                     # diag_x, diag_y = get_diagonal_xy((gd.x, gd.y), angle, (x, y))  # Try to avoid the eye looking disjointed from the guide.
                     self.draw_eye(x, y, color, angle)
-                    metrics_match = True
+                    alignment_match = True
                     
-        return metrics_match
+        return alignment_match
                 
                 
     def draw_eye(self, x, y, color, angle):
