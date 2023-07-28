@@ -6,13 +6,14 @@ from fontTools.misc.fixedTools import otRound
 from mojo.subscriber import Subscriber, registerGlyphEditorSubscriber
 from  mojo.tools import IntersectGlyphWithLine
 from mojo.UI import CurrentGlyphWindow, getGlyphViewDisplaySettings
+from mojo.pens import DecomposePointPen
 
 import merz
 from merz.tools.drawingTools import NSImageDrawingTools
 
 
-
-RAD_BASE = getDefault("glyphViewOnCurvePointsSize") * 1.75 # changing this value will impact how large the eye is, relative to your on-curve pt size
+POINT_RADIUS = getDefault("glyphViewOnCurvePointsSize")
+RAD_BASE = POINT_RADIUS * 1.75  # Changing this value will impact how large the eye is, relative to your on-curve pt size
 
 def eyelinerSymbolFactory(
         radius      = RAD_BASE,
@@ -139,6 +140,8 @@ class Eyeliner(Subscriber):
 
         self.col_blues = self.get_darkened_blue(self.get_flattened_alpha(getDefault("glyphViewBluesColor")))
         self.col_fblues = self.get_darkened_blue(self.get_flattened_alpha(getDefault("glyphViewFamilyBluesColor")))
+        
+        self.component_color = self.get_flattened_alpha(getDefault("glyphViewComponentStrokeColor"))
 
 
     def get_flattened_alpha(self, color):
@@ -160,7 +163,7 @@ class Eyeliner(Subscriber):
         
         return (r/255, g/255, b/255, 1)
 
-
+    
     def glyphEditorGlyphDidChange(self, info):
         self.g = info["glyph"]
         self.begin_drawing()
@@ -202,6 +205,12 @@ class Eyeliner(Subscriber):
         if self.g == None:
             return
         self.f = self.g.font
+        
+        # Use a decomposed version of the current glyph in order to analyze.
+        decomp_glyph = RGlyph()
+        decomp_glyph.width = self.g.width
+        decomp_pen = DecomposePointPen(self.f, decomp_glyph.getPointPen())
+        self.g.drawPoints(decomp_pen)
             
         self.container.clearSublayers()
 
@@ -209,12 +218,15 @@ class Eyeliner(Subscriber):
         anchors_on  = getGlyphViewDisplaySettings().get('Anchors')
         
         # On-curve points
+        real_points = []
         if oncurves_on is True:
-            for c in self.g:
+            for c in self.g.contours:
                 for pt in c.points:
                     if pt.type != 'offcurve':
                         self.check_metrics(pt.x, pt.y)
-        # Anchors
+                        real_points.append((pt.x, pt.y))
+                        
+        # Anchors (Use un-decomposed glyph)
         if anchors_on is True:
             for a in self.g.anchors:
                 self.check_metrics(a.x, a.y)
@@ -224,8 +236,18 @@ class Eyeliner(Subscriber):
             for (x,y) in self.slice_coords:
                 self.check_metrics(x, y)
                 
+        # Component points
+        for c in decomp_glyph.contours:
+            for pt in c.points:
+                if pt.type != 'offcurve':
+                    if (pt.x, pt.y) not in real_points:
+                        if self.check_metrics(pt.x, pt.y) == True:
+                            self.draw_component_point(pt.x, pt.y)
+                
                 
     def check_metrics(self, x, y):
+        metrics_match = False
+        
         # Get font dimensions y's
         font_dim = [
             self.f.info.descender, 0, self.f.info.xHeight,
@@ -274,6 +296,7 @@ class Eyeliner(Subscriber):
                 if color is None:
                     color = self.col_glob_guides
                 self.draw_eye(x, y, color, angle)
+                metrics_match = True
 
             # Local horizontal guides
             elif otRound(y) in g_guide_ys.keys():
@@ -281,11 +304,13 @@ class Eyeliner(Subscriber):
                 if color is None:
                     color = self.col_loc_guides
                 self.draw_eye(x, y, color, angle)
+                metrics_match = True
 
             # Font dimensions
             elif otRound(y) in font_dim:
                 color = self.col_font_dim
                 self.draw_eye(x, y, color, angle)
+                metrics_match = True
 
             # Blues
             elif otRound(y) in blue_vals:
@@ -298,6 +323,7 @@ class Eyeliner(Subscriber):
                 if fblues_on is True:
                     color = self.col_fblues
                     self.draw_eye(x, y, color, angle)
+                    metrics_match = True
 
             # ==== VERTICAL STUFF ==== #
             angle = 90
@@ -307,6 +333,7 @@ class Eyeliner(Subscriber):
                 if color is None:
                     color = self.col_glob_guides
                 self.draw_eye(x, y, color, angle)
+                metrics_match = True
 
             # Local vertical guides
             elif otRound(x) in g_guide_xs.keys():
@@ -314,6 +341,7 @@ class Eyeliner(Subscriber):
                 if color is None:
                     color = self.col_loc_guides
                 self.draw_eye(x, y, color, angle)
+                metrics_match = True
 
             # ==== DIAGONAL STUFF ==== #
             for gd in g_guide_diags + f_guide_diags:
@@ -329,6 +357,9 @@ class Eyeliner(Subscriber):
                     ## Tested code to clean up the diagonal eye presentation
                     # diag_x, diag_y = get_diagonal_xy((gd.x, gd.y), angle, (x, y))  # Try to avoid the eye looking disjointed from the guide.
                     self.draw_eye(x, y, color, angle)
+                    metrics_match = True
+                    
+        return metrics_match
                 
                 
     def draw_eye(self, x, y, color, angle):
@@ -348,6 +379,20 @@ class Eyeliner(Subscriber):
                                     fillColor   = (1,1,1,0)  # self.fill_color
                                     )
                 )
+                
+                
+    def draw_component_point(self, x, y):
+        component_point = self.container.appendSymbolSublayer(
+                position=(x, y)
+                )
+
+        component_point.setImageSettings(
+                dict(
+                    name="oval",
+                    size=(otRound(POINT_RADIUS*2), otRound(POINT_RADIUS*2)),
+                    fillColor=tuple(self.component_color)
+                )
+            )
         
         
 registerGlyphEditorSubscriber(Eyeliner)
