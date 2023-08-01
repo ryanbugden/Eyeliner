@@ -5,9 +5,10 @@ from fontTools.misc.fixedTools import otRound
 from fontParts.world import RGlyph
 
 from mojo.subscriber import Subscriber, registerGlyphEditorSubscriber
-from  mojo.tools import IntersectGlyphWithLine
+from mojo.tools import IntersectGlyphWithLine
 from mojo.UI import CurrentGlyphWindow, getGlyphViewDisplaySettings
 from mojo.pens import DecomposePointPen
+from mojo.events import getActiveEventTool
 
 import merz
 from merz.tools.drawingTools import NSImageDrawingTools
@@ -102,10 +103,19 @@ def is_on_diagonal(pta, angle, ptb, tol=0.11):
 
 class Eyeliner(Subscriber):
 
+
     def build(self):
         self.slice_tool_active = False
         self.slice_coords = []
-
+        self.shift_down = False
+        self.down_point, self.drag_point = (0,0), (0,0)
+        
+        self.container = self.getGlyphEditor().extensionContainer(
+            identifier="eyeliner.foreground", 
+            location="foreground", 
+            clear=True
+            )
+        
 
     def started(self):
         try:
@@ -113,12 +123,6 @@ class Eyeliner(Subscriber):
         except:
             self.g = None
         self.update_color_prefs()
-
-        self.container = self.getGlyphEditor().extensionContainer(
-            identifier="eyeliner.foreground", 
-            location="foreground", 
-            clear=True
-            )
 
         self.begin_drawing()
         
@@ -175,31 +179,52 @@ class Eyeliner(Subscriber):
         self.begin_drawing() 
         
         
+    def glyphEditorDidChangeModifiers(self, info):
+        # Check Shift modifier
+        if info['deviceState']['shiftDown'] == 0:
+            self.shift_down = False
+        else:
+            self.shift_down = True
+        
+        
     def glyphEditorDidMouseDown(self, info):
         '''Support for slice tool eyes'''
-        lle = info['lowLevelEvents'][0]
-        tool = lle ['tool']
-        self.down_point = lle['point']
+        tool = info['lowLevelEvents'][0]['tool']
+    
         if tool.__module__ == "lib.eventTools.sliceTool":
+            self.slice_tool = tool
             self.slice_tool_active = True
+            point = self.slice_tool.sliceDown
+            self.down_point = (point.x, point.y)
         else:
             self.slice_tool_active = False
+            
+        self.begin_drawing()
         
         
     def glyphEditorDidMouseDrag(self, info):
+        '''Support for slice tool eyes'''
         self.g = info["glyph"]
         
         self.slice_coords = []
         if self.slice_tool_active:
-            slice_line = (self.down_point, info['lowLevelEvents'][0]['point'])
+            point = self.slice_tool.sliceDrag
+            self.drag_point = (point.x, point.y)
+            slice_line = (self.down_point, self.drag_point)
             intersects = IntersectGlyphWithLine(self.g, slice_line, canHaveComponent=False, addSideBearings=False)
             for inter in intersects:
                 x, y = otRound(inter[0]), otRound(inter[1])
-                self.slice_coords.append((x,y))
+                self.slice_coords.append((x,y)) 
         else:
             self.slice_coords = []
         
         self.begin_drawing()
+        
+        
+    def glyphEditorDidMouseUp(self, info):
+        '''Support for slice tool eyes'''
+        # Remove sliced eyes on undo
+        self.slice_tool_active = False
         
 
     def begin_drawing(self):
@@ -207,7 +232,7 @@ class Eyeliner(Subscriber):
             return
         self.f = self.g.font
         
-        # Use a decomposed version of the current glyph in order to analyze.
+        # Use a decomposed version of the current glyph in order to analyze components’ points
         decomp_glyph = RGlyph()
         decomp_glyph.width = self.g.width
         decomp_pen = DecomposePointPen(self.f, decomp_glyph.getPointPen())
