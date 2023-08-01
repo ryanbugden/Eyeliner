@@ -11,7 +11,7 @@ A RoboFont extension that highlights points and anchors that are aligned with ve
 ### What it looks at:
 * On-curve points
 * Anchors
-* The prospective on-curve point(s) while using slice tool
+* The prospective on-curve point(s) while using Slice Tool
 * Components (if they were to be decomposed)
 
 ### What it checks those things against:
@@ -27,7 +27,8 @@ A RoboFont extension that highlights points and anchors that are aligned with ve
 
 ### Versions
 ```
-	2.4   2023.07.27  Add support for mid-slice-tool-analysis + components. Thanks Connor & Erik for the help!
+	2.4   2023.07.27  Add support for mid-slice-tool-analysis + components. 
+	                  Thanks Connor & Erik for the help!
 	2.3.2 2023.05.31  Move eyes to foreground. Higher tolerance for diagonals. Clean up code. 
 	2.3.1 2023.03.08  Support new naming for "glyphViewOnCurvePointsSize" default key. 
 	2.3.0 2022.09.21  New framework for setting eye color (waiting on z-index infrastructure). 
