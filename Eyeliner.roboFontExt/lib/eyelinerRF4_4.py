@@ -174,6 +174,7 @@ class Eyeliner(Subscriber):
         
         return (r/255, g/255, b/255, 1)
 
+
     glyphEditorGlyphDidChangeOutlineDelay = 0
     def glyphEditorGlyphDidChangeOutline(self, info):
         self.g = info["glyph"]
@@ -414,12 +415,6 @@ class Eyeliner(Subscriber):
                 
                 
     def draw_eye(self, x, y, color, angle):
-
-        # # Stored attempt at creating an illusion of line diverging and converging, using fill color. Would only work on unsupported z-index.
-        # self.fill_color = self.gvbc
-        # if x < 0 or x > self.g.width:
-        #     self.fill_color = self.gvmc
-            
         eye = self.container.appendSymbolSublayer(
                 position        = (x, y),
                 rotation        = angle,
