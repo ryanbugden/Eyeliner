@@ -8,7 +8,6 @@ from mojo.subscriber import Subscriber, registerGlyphEditorSubscriber
 from mojo.tools import IntersectGlyphWithLine
 from mojo.UI import CurrentGlyphWindow, getGlyphViewDisplaySettings
 from mojo.pens import DecomposePointPen
-from mojo.events import getActiveEventTool
 
 import merz
 from merz.tools.drawingTools import NSImageDrawingTools
@@ -191,7 +190,7 @@ class Eyeliner(Subscriber):
         '''Support for slice tool eyes'''
         tool = info['lowLevelEvents'][0]['tool']
     
-        if tool.__module__ == "lib.eventTools.sliceTool":
+        if tool.__class__.__name__ == "SliceTool":
             self.slice_tool = tool
             self.slice_tool_active = True
             point = self.slice_tool.sliceDown
