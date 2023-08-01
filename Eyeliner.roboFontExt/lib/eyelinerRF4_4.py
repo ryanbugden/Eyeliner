@@ -61,23 +61,30 @@ def eyelinerSymbolFactory(
 merz.SymbolImageVendor.registerImageFactory("eyeliner.eye", eyelinerSymbolFactory)
 
 
-def is_on_diagonal(pta, angle, ptb, tol=0.11):
+def is_on_diagonal(pta, angle, ptb, tol=0.08):
     if pta == ptb: 
         return True
+        
     ar = math.radians(angle)%math.pi
     ca = math.cos(ar)
     sa = math.sin(ar)
-    if not math.isclose(ca,0,abs_tol=tol) and not math.isclose(sa,0,abs_tol=tol):
-        # diagonal, distances for x and y should match
-        tdx = (pta[0]-ptb[0])/ca
-        tdy = (pta[1]-ptb[1])/sa
-        return math.isclose(tdx, tdy, abs_tol=2)
-    elif math.isclose(ca,1,abs_tol=tol) and math.isclose(sa,0,abs_tol=tol):
-        # horizontal, so y should match
+    x_diff = ptb[0] - pta[0]
+    y_diff = ptb[1] - pta[1]
+
+    if not math.isclose(ca, 0, abs_tol=tol) and not math.isclose(sa, 0, abs_tol=tol):
+        # Diagonal, distances for x and y should match
+        tdx = x_diff / ca
+        tdy = y_diff / sa
+        return math.isclose(tdx, tdy, abs_tol=5)
+        
+    elif math.isclose(ca, 1, abs_tol=tol) and math.isclose(sa, 0, abs_tol=tol):
+        # Horizontal, so y should match
         return math.isclose(pta[1], ptb[1], abs_tol=tol)
-    elif math.isclose(ca,0,abs_tol=tol) and math.isclose(sa,1,abs_tol=tol):
-        # vertical, so x should match
+        
+    elif math.isclose(ca, 0, abs_tol=tol) and math.isclose(sa, 1, abs_tol=tol):
+        # Vertical, so x should match
         return math.isclose(pta[0], ptb[0], abs_tol=tol)
+        
     return False
 
 
@@ -167,12 +174,29 @@ class Eyeliner(Subscriber):
         
         return (r/255, g/255, b/255, 1)
 
-    
-    def glyphEditorGlyphDidChange(self, info):
+    glyphEditorGlyphDidChangeOutlineDelay = 0
+    def glyphEditorGlyphDidChangeOutline(self, info):
+        self.g = info["glyph"]
+        self.begin_drawing()
+    glyphEditorGlyphDidChangeComponentsDelay = 0
+    def glyphEditorGlyphDidChangeComponents(self, info):
+        self.g = info["glyph"]
+        self.begin_drawing()
+    glyphEditorGlyphDidChangeContoursDelay = 0    
+    def glyphEditorGlyphDidChangeContours(self, info):
+        self.g = info["glyph"]
+        self.begin_drawing()
+    glyphEditorGlyphDidChangeAnchorsDelay = 0
+    def glyphEditorGlyphDidChangeAnchors(self, info):
+        self.g = info["glyph"]
+        self.begin_drawing()
+    glyphEditorGlyphDidChangeGuidelinesDelay = 0
+    def glyphEditorGlyphDidChangeGuidelines(self, info):
         self.g = info["glyph"]
         self.begin_drawing()
         
         
+    glyphEditorDidSetGlyphDelay = 0.0001
     def glyphEditorDidSetGlyph(self, info):
         self.g = info["glyph"]
         self.begin_drawing() 
@@ -229,6 +253,7 @@ class Eyeliner(Subscriber):
     def begin_drawing(self):
         if self.g == None:
             return
+            
         self.f = self.g.font
         
         # Use a decomposed version of the current glyph in order to analyze components’ points
@@ -342,6 +367,7 @@ class Eyeliner(Subscriber):
                 if blues_on is True:
                     color = self.col_blues
                     self.draw_eye(x, y, color, angle)
+                    alignment_match = True
 
             # Family blues
             elif otRound(y) in fblue_vals:
