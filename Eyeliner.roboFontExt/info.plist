@@ -13,15 +13,15 @@
 	<key>launchAtStartUp</key>
 	<true/>
 	<key>mainScript</key>
-	<string>usher.py</string>
+	<string>eyeliner.py</string>
 	<key>name</key>
 	<string>Eyeliner</string>
 	<key>requiresVersionMajor</key>
 	<string>4</string>
 	<key>requiresVersionMinor</key>
-	<string>2</string>
+	<string>4b</string>
 	<key>timeStamp</key>
-	<real>1692731993.127269</real>
+	<real>1692732358.8365481</real>
 	<key>version</key>
 	<string>2.6</string>
 </dict>
