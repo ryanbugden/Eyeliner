@@ -8,16 +8,14 @@ from mojo.subscriber import Subscriber, registerGlyphEditorSubscriber
 from mojo.tools import IntersectGlyphWithLine
 from mojo.UI import CurrentGlyphWindow, getGlyphViewDisplaySettings
 from mojo.pens import DecomposePointPen
+from fontPens.digestPointPen import DigestPointPen
 
 import merz
 from merz.tools.drawingTools import NSImageDrawingTools
 
 
-POINT_RADIUS = getDefault("glyphViewOnCurvePointsSize")
-RAD_BASE = POINT_RADIUS * 1.75  # Changing this value will impact how large the eye is, relative to your on-curve pt size
-
 def eyelinerSymbolFactory(
-        radius      = RAD_BASE,
+        radius      = 5,
         stretch     = 0.7,
         strokeColor = (0, 0, 0, 1),
         strokeWidth = 1,
@@ -115,17 +113,28 @@ class Eyeliner(Subscriber):
         self.slice_coords = []
         self.shift_down = False
         self.down_point, self.drag_point = (0,0), (0,0)
+        self.blue_vals, self.fblue_vals = [], []
+        self.font_dim = []
+        self.oncurve_coords = []
+        self.comp_oncurve_coords = []
+        self.anc_coords = []
+
+        self.update_base_sizes()
+        self.update_blues_display_settings()
+        self.oncurves_on = getGlyphViewDisplaySettings().get('OnCurvePoints')
+        self.anchors_on = getGlyphViewDisplaySettings().get('Anchors')
         
         self.container = self.getGlyphEditor().extensionContainer(
-            identifier="eyeliner.foreground", 
-            location="foreground", 
-            clear=True
-            )
+                    identifier="eyeliner.foreground", 
+                    location="foreground", 
+                    clear=True
+                )
         
 
     def started(self):
         try:
             self.g = CurrentGlyph()
+            self.update_font_info()
         except:
             self.g = None
         self.update_color_prefs()
@@ -136,9 +145,15 @@ class Eyeliner(Subscriber):
     def destroy(self):
         self.container.clearSublayers()
         
+
+    def update_base_sizes(self):
+        self.point_radius = getDefault("glyphViewOnCurvePointsSize")
+        self.rad_base = self.point_radius * 1.75  # Changing this value will impact how large the eye is, relative to your on-curve pt size
+
         
     def roboFontDidChangePreferences(self, info):
         self.update_color_prefs()
+        self.update_base_sizes()
 
 
     def update_color_prefs(self):
@@ -178,28 +193,112 @@ class Eyeliner(Subscriber):
     glyphEditorGlyphDidChangeOutlineDelay = 0
     def glyphEditorGlyphDidChangeOutline(self, info):
         self.g = info["glyph"]
+        self.update_oncurve_info()
         self.begin_drawing()
-    glyphEditorGlyphDidChangeComponentsDelay = 0
-    def glyphEditorGlyphDidChangeComponents(self, info):
-        self.g = info["glyph"]
-        self.begin_drawing()
+
+
     glyphEditorGlyphDidChangeContoursDelay = 0    
     def glyphEditorGlyphDidChangeContours(self, info):
         self.g = info["glyph"]
+        self.update_oncurve_info()
         self.begin_drawing()
+
+
+    glyphEditorGlyphDidChangeComponentsDelay = 0
+    def glyphEditorGlyphDidChangeComponents(self, info):
+        self.g = info["glyph"]
+        self.update_component_info()
+        self.begin_drawing()
+
+
+    def update_component_info(self):
+        # Use a decomposed version of the current glyph in order to analyze components’ points
+        self.f = self.g.font
+
+        # Set up a decomposed glyph object
+        self.decomp_glyph = RGlyph()
+        self.decomp_glyph.width = self.g.width
+        decomp_pen = DecomposePointPen(self.f, self.decomp_glyph.getPointPen())
+        self.g.drawPoints(decomp_pen)
+        # Get all on-curve points for the component, and nothing else
+        digest_pen = DigestPointPen()
+        self.decomp_glyph.drawPoints(digest_pen)
+        self.comp_oncurve_coords = [entry[0] for entry in digest_pen.getDigest() if entry[1] != None and type(entry[0]) == tuple and entry[0] not in self.oncurve_coords] 
+
+
+    def update_oncurve_info(self):
+        self.oncurves_on = getGlyphViewDisplaySettings().get('OnCurvePoints')
+        # Use a digest point pen to get only on-curves
+        digest_pen = DigestPointPen()
+        self.g.drawPoints(digest_pen)
+        # Get all on-curve points
+        self.oncurve_coords = [entry[0] for entry in digest_pen.getDigest() if entry[1] != None and type(entry[0]) == tuple] 
+        
+
     glyphEditorGlyphDidChangeAnchorsDelay = 0
     def glyphEditorGlyphDidChangeAnchors(self, info):
         self.g = info["glyph"]
+        self.update_anchor_info()
         self.begin_drawing()
+
+
+    def update_anchor_info(self):
+        '''Store updated anchor coordinates'''
+        self.anchors_on = getGlyphViewDisplaySettings().get('Anchors')
+        self.anc_coords = [(a.x, a.y) for a in self.g.anchors]
+
+
     glyphEditorGlyphDidChangeGuidelinesDelay = 0
     def glyphEditorGlyphDidChangeGuidelines(self, info):
         self.g = info["glyph"]
+        self.update_guidelines_info()
         self.begin_drawing()
-        
-        
+
+
+    def update_guidelines_info(self):
+        '''Store updated guideline coordinates'''
+        # Font guidelines
+        self.f_guide_xs    = {}
+        self.f_guide_ys    = {}
+        self.f_guide_diags = []
+        for guideline in self.f.guidelines:
+            if guideline.color:
+                guide_color = guideline.color
+            else:
+                guide_color = self.col_glob_guides
+            if guideline.angle in [0, 180]:
+                self.f_guide_ys[otRound(guideline.y)] = guide_color
+            elif guideline.angle in [90, 270]:
+                self.f_guide_xs[otRound(guideline.x)] = guide_color
+            else:
+                self.f_guide_diags.append(((guideline.x, guideline.y), guideline.angle, guide_color))
+
+        # Glyph guidelines
+        if self.g is not None:
+            self.g_guide_xs    = {}
+            self.g_guide_ys    = {}
+            self.g_guide_diags = []
+            for guideline in self.g.guidelines:
+                if guideline.color:
+                    guide_color = guideline.color
+                else:
+                    guide_color = self.col_loc_guides
+                if guideline.angle in [0, 180]:
+                    self.g_guide_ys[otRound(guideline.y)] = guide_color
+                elif guideline.angle in [90, 270]:
+                    self.g_guide_xs[otRound(guideline.x)] = guide_color
+                else:
+                    self.g_guide_diags.append(((guideline.x, guideline.y), guideline.angle, guide_color))
+
+
+
     glyphEditorDidSetGlyphDelay = 0.0001
     def glyphEditorDidSetGlyph(self, info):
         self.g = info["glyph"]
+        self.update_component_info()
+        self.update_oncurve_info()
+        self.update_anchor_info()
+        self.update_guidelines_info()
         self.begin_drawing() 
         
         
@@ -249,193 +348,150 @@ class Eyeliner(Subscriber):
         '''Support for slice tool eyes'''
         # Remove sliced eyes on undo
         self.slice_tool_active = False
+
+
+    glyphEditorFontInfoDidChangeDelay = 0.2
+    def glyphEditorFontInfoDidChange(self, info):
+        self.update_font_info()
         
+        
+    def update_font_info(self):
+        self.f = self.g.font
+        # Get font dimensions y's
+        self.font_dim = [
+            self.f.info.descender, 0, self.f.info.xHeight,
+            self.f.info.ascender, self.f.info.capHeight
+            ]
+        
+        # Get blue y's and whether they're set to be displayed
+        self.blue_vals  = self.f.info.postscriptBlueValues + self.f.info.postscriptOtherBlues
+        self.fblue_vals = self.f.info.postscriptFamilyBlues + self.f.info.postscriptFamilyOtherBlues
+        self.update_blues_display_settings()
+
+
+    def update_blues_display_settings(self):
+        self.blues_on  = getGlyphViewDisplaySettings()['Blues']
+        self.fblues_on = getGlyphViewDisplaySettings()['FamilyBlues']
+
 
     def begin_drawing(self):
         if self.g == None:
             return
             
-        self.f = self.g.font
-        
-        # Use a decomposed version of the current glyph in order to analyze components’ points
-        decomp_glyph = RGlyph()
-        decomp_glyph.width = self.g.width
-        decomp_pen = DecomposePointPen(self.f, decomp_glyph.getPointPen())
-        self.g.drawPoints(decomp_pen)
-            
         self.container.clearSublayers()
-
-        oncurves_on = getGlyphViewDisplaySettings().get('OnCurvePoints')
-        anchors_on  = getGlyphViewDisplaySettings().get('Anchors')
         
         # On-curve points
-        real_points = []
-        if oncurves_on is True:
-            for c in self.g.contours:
-                for pt in c.points:
-                    if pt.type != 'offcurve':
-                        self.check_alignment(pt.x, pt.y)
-                        real_points.append((pt.x, pt.y))
+        if self.oncurves_on is True:
+            for coord in self.oncurve_coords:
+                self.check_alignment(coord)
                         
-        # Anchors (Use un-decomposed glyph)
-        if anchors_on is True:
-            for a in self.g.anchors:
-                self.check_alignment(a.x, a.y)
+        # Anchors
+        if self.anchors_on is True:
+            for coord in self.anc_coords:
+                self.check_alignment(coord)
                 
         # Slice tool intersections
         if self.slice_tool_active:
-            for (x,y) in self.slice_coords:
-                self.check_alignment(x, y)
+            for coord in self.slice_coords:
+                self.check_alignment(coord)
                 
         # Component points
-        for c in decomp_glyph.contours:
-            for pt in c.points:
-                if pt.type != 'offcurve':
-                    if (pt.x, pt.y) not in real_points:
-                        if self.check_alignment(pt.x, pt.y) == True:
-                            self.draw_component_point(pt.x, pt.y)
+        for coord in self.comp_oncurve_coords:
+            if self.check_alignment(coord) == True:
+                self.draw_component_point(coord)
                 
                 
-    def check_alignment(self, x, y):
+    def check_alignment(self, coord):
         alignment_match = False
-        
-        # Get font dimensions y's
-        font_dim = [
-            self.f.info.descender, 0, self.f.info.xHeight,
-            self.f.info.ascender, self.f.info.capHeight
-            ]
-        
-        # Get guide x's and y's
-        f_guide_xs    = {}
-        f_guide_ys    = {}
-        f_guide_diags = []
-        for guideline in self.f.guidelines:
-            if guideline.angle in [0, 180]:
-                f_guide_ys[otRound(guideline.y)] = guideline.color
-            elif guideline.angle in [90, 270]:
-                f_guide_xs[otRound(guideline.x)] = guideline.color
-            else:
-                f_guide_diags.append(guideline)
-        
-        # Get blue y's and whether they're set to be displayed
-        blue_vals = self.f.info.postscriptBlueValues + self.f.info.postscriptOtherBlues
-        fblue_vals = self.f.info.postscriptFamilyBlues + self.f.info.postscriptFamilyOtherBlues
-        
-        blues_on = getGlyphViewDisplaySettings()['Blues']
-        fblues_on = getGlyphViewDisplaySettings()['FamilyBlues']
+        x, y = coord[0], coord[1]
 
         if self.g is not None:
-
-            g_guide_xs    = {}
-            g_guide_ys    = {}
-            g_guide_diags = []
-            for guideline in self.g.guidelines:
-                if guideline.angle in [0, 180]:
-                    g_guide_ys[otRound(guideline.y)] = guideline.color
-                elif guideline.angle in [90, 270]:
-                    g_guide_xs[otRound(guideline.x)] = guideline.color
-                else:
-                    g_guide_diags.append(guideline)
 
             angle = 0
             color = None
 
             # ==== HORIZONTAL STUFF ==== #
             # Global horizontal guides
-            if otRound(y) in f_guide_ys.keys():
-                color = f_guide_ys[otRound(y)]
-                if color is None:
-                    color = self.col_glob_guides
-                self.draw_eye(x, y, color, angle)
+            if otRound(y) in self.f_guide_ys.keys():
+                color = self.f_guide_ys[otRound(y)]
+                self.draw_eye(coord, color, angle)
                 alignment_match = True
 
             # Local horizontal guides
-            elif otRound(y) in g_guide_ys.keys():
-                color = g_guide_ys[otRound(y)]
-                if color is None:
-                    color = self.col_loc_guides
-                self.draw_eye(x, y, color, angle)
+            elif otRound(y) in self.g_guide_ys.keys():
+                color = self.g_guide_ys[otRound(y)]
+                self.draw_eye(coord, color, angle)
                 alignment_match = True
 
             # Font dimensions
-            elif otRound(y) in font_dim:
+            elif otRound(y) in self.font_dim:
                 color = self.col_font_dim
-                self.draw_eye(x, y, color, angle)
+                self.draw_eye(coord, color, angle)
                 alignment_match = True
 
             # Blues
-            elif otRound(y) in blue_vals:
-                if blues_on is True:
+            elif otRound(y) in self.blue_vals:
+                if self.blues_on is True:
                     color = self.col_blues
-                    self.draw_eye(x, y, color, angle)
+                    self.draw_eye(coord, color, angle)
                     alignment_match = True
 
             # Family blues
-            elif otRound(y) in fblue_vals:
-                if fblues_on is True:
+            elif otRound(y) in self.fblue_vals:
+                if self.fblues_on is True:
                     color = self.col_fblues
-                    self.draw_eye(x, y, color, angle)
+                    self.draw_eye(coord, color, angle)
                     alignment_match = True
 
             # ==== VERTICAL STUFF ==== #
             angle = 90
             # Global vertical guides
-            if otRound(x) in f_guide_xs.keys():
-                color = f_guide_xs[otRound(x)]
-                if color is None:
-                    color = self.col_glob_guides
-                self.draw_eye(x, y, color, angle)
+            if otRound(x) in self.f_guide_xs.keys():
+                color = self.f_guide_xs[otRound(x)]
+                self.draw_eye(coord, color, angle)
                 alignment_match = True
 
             # Local vertical guides
-            elif otRound(x) in g_guide_xs.keys():
-                color = g_guide_xs[otRound(x)]
-                if color is None:
-                    color = self.col_loc_guides
-                self.draw_eye(x, y, color, angle)
+            elif otRound(x) in self.g_guide_xs.keys():
+                color = self.g_guide_xs[otRound(x)]
+                self.draw_eye(coord, color, angle)
                 alignment_match = True
 
             # ==== DIAGONAL STUFF ==== #
-            for gd in g_guide_diags + f_guide_diags:
-                color = gd.color
-                if color is None:
-                    if gd in g_guide_diags:
-                        color = self.col_loc_guides 
-                    else:
-                        color = self.col_glob_guides 
-                angle = gd.angle
-                result = is_on_diagonal((gd.x, gd.y), angle, (x, y))
+            for gd_info in self.g_guide_diags + self.f_guide_diags:
+                angle, color = gd_info[1], gd_info[2]
+                result = is_on_diagonal(gd_info[0], angle, (x, y))
                 if result:
                     ## Tested code to clean up the diagonal eye presentation
                     # diag_x, diag_y = get_diagonal_xy((gd.x, gd.y), angle, (x, y))  # Try to avoid the eye looking disjointed from the guide.
-                    self.draw_eye(x, y, color, angle)
+                    self.draw_eye(coord, color, angle)
                     alignment_match = True
                     
         return alignment_match
                 
                 
-    def draw_eye(self, x, y, color, angle):
+    def draw_eye(self, coord, color, angle):
         eye = self.container.appendSymbolSublayer(
-                position        = (x, y),
+                position        = (coord[0], coord[1]),
                 rotation        = angle,
                 imageSettings   = dict(
                                     name        = "eyeliner.eye",
-                                    radius      = RAD_BASE, 
+                                    radius      = self.rad_base, 
                                     strokeColor = color,
                                     fillColor   = (1,1,1,0)  # self.fill_color
                                     )
                 )
                 
                 
-    def draw_component_point(self, x, y):
+    def draw_component_point(self, coord):
         component_point = self.container.appendSymbolSublayer(
-                position=(x, y)
+                position=(coord[0], coord[1])
                 )
 
         component_point.setImageSettings(
                 dict(
                     name="oval",
-                    size=(otRound(POINT_RADIUS*2), otRound(POINT_RADIUS*2)),
+                    size=(otRound(self.point_radius*2), otRound(self.point_radius*2)),
                     fillColor=tuple(self.component_color)
                 )
             )
