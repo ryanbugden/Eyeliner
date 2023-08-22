@@ -212,7 +212,6 @@ class Eyeliner(Subscriber):
 
 
     def update_component_info(self):
-        # Use a decomposed version of the current glyph in order to analyze components’ points
         self.f = self.g.font
 
         # Set up a decomposed glyph object
@@ -295,8 +294,9 @@ class Eyeliner(Subscriber):
     glyphEditorDidSetGlyphDelay = 0.0001
     def glyphEditorDidSetGlyph(self, info):
         self.g = info["glyph"]
-        self.update_component_info()
+        # Update on-curves before component info.
         self.update_oncurve_info()
+        self.update_component_info()
         self.update_anchor_info()
         self.update_guidelines_info()
         self.begin_drawing() 
