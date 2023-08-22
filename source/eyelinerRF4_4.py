@@ -124,23 +124,25 @@ class Eyeliner(Subscriber):
         self.update_blues_display_settings()
         self.oncurves_on = getGlyphViewDisplaySettings().get('OnCurvePoints')
         self.anchors_on = getGlyphViewDisplaySettings().get('Anchors')
+
+        self.glyph_editor = self.getGlyphEditor()
         
-        self.oncurve_container = self.getGlyphEditor().extensionContainer(
+        self.oncurve_container = self.glyph_editor.extensionContainer(
                     identifier="eyeliner.oncurves", 
                     location="foreground", 
                     clear=True
                 )
-        self.comp_container = self.getGlyphEditor().extensionContainer(
+        self.comp_container = self.glyph_editor.extensionContainer(
                     identifier="eyeliner.components", 
                     location="foreground", 
                     clear=True
                 )
-        self.anchor_container = self.getGlyphEditor().extensionContainer(
+        self.anchor_container = self.glyph_editor.extensionContainer(
                     identifier="eyeliner.anchors", 
                     location="foreground", 
                     clear=True
                 )
-        self.slice_container = self.getGlyphEditor().extensionContainer(
+        self.slice_container = self.glyph_editor.extensionContainer(
                     identifier="eyeliner.slice", 
                     location="foreground", 
                     clear=True
@@ -149,12 +151,12 @@ class Eyeliner(Subscriber):
 
     def started(self):
         try:
-            self.g = CurrentGlyph()
+            self.g = self.glyph_editor.getGlyph()
             self.update_font_info()
         except:
             self.g = None
         self.update_color_prefs()
-
+        
         self.draw_oncurves()
         self.draw_anchors()
         self.draw_comp()
@@ -399,6 +401,7 @@ class Eyeliner(Subscriber):
             self.f.info.descender, 0, self.f.info.xHeight,
             self.f.info.ascender, self.f.info.capHeight
             ]
+        print("Updating font dimensions and blue values.")
         
         # Get blue y's and whether they're set to be displayed
         self.blue_vals  = self.f.info.postscriptBlueValues + self.f.info.postscriptOtherBlues
