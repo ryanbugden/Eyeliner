@@ -324,7 +324,6 @@ class Eyeliner(Subscriber):
                     self.g_guide_diags.append(((guideline.x, guideline.y), guideline.angle, guide_color))
 
 
-
     glyphEditorDidSetGlyphDelay = 0.0001
     def glyphEditorDidSetGlyph(self, info):
         self.g = info["glyph"]
@@ -337,7 +336,7 @@ class Eyeliner(Subscriber):
         self.draw_anchors()
         self.draw_comp()
         
-        
+    
     def glyphEditorDidChangeModifiers(self, info):
         # Check Shift modifier
         if info['deviceState']['shiftDown'] == 0:
