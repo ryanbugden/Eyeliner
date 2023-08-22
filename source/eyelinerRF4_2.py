@@ -17,7 +17,8 @@ def eyelinerSymbolFactory(
         radius,
         stretch=0.7,
         strokeColor=(0, 0, 0, 1),
-        strokeWidth=1
+        strokeWidth=1,
+        fillColor=(1, 1, 1, 0)
         ):
     # calcute the width and height
     width = radius * 6 * stretch * 2 + strokeWidth * 2
@@ -46,7 +47,7 @@ def eyelinerSymbolFactory(
         (6 * radius * stretch, 0))
     pen.closePath()
 
-    bot.fill(None)
+    bot.fill(*fillColor)
     bot.stroke(*strokeColor)
     bot.strokeWidth(strokeWidth)
     bot.translate(width / 2 + 0.25, height / 2 + 0.25)
@@ -84,27 +85,18 @@ class Eyeliner(Subscriber):
             self.g = CurrentGlyph()
         except:
             self.g = None
+
+        self.updateColorPrefs()
             
-        self.col_font_dim = self.getFlattenedAlpha(
-            NSColorToRgba(getDefaultColor("glyphViewFontMetricsStrokeColor")))
-        self.col_glob_guides = self.getFlattenedAlpha(
-            NSColorToRgba(getDefaultColor("glyphViewGlobalGuidesColor")))
-        self.col_loc_guides = self.getFlattenedAlpha(
-            NSColorToRgba(getDefaultColor("glyphViewLocalGuidesColor")))
-            
-        self.col_blues = self.getDarkenedBlue(self.getFlattenedAlpha(NSColorToRgba(getDefaultColor("glyphViewBluesColor"))))
-        self.col_fBlues = self.getDarkenedBlue(self.getFlattenedAlpha(NSColorToRgba(getDefaultColor("glyphViewFamilyBluesColor"))))
-        
         self.beginDrawing()
         
     def destroy(self):
-        self.bgContainer.clearSublayers()
+        self.mgContainer.clearSublayers()
 
     def getFlattenedAlpha(self, color):
         # flatten transparency of eye, using background color preference
         r, g, b, a = color
-        r2, g2, b2, a2 = NSColorToRgba(
-            getDefaultColor("glyphViewBackgroundColor"))
+        r2, g2, b2, a2 = self.gvbc
         r3 = r2 + (r - r2) * a
         g3 = g2 + (g - g2) * a
         b3 = b2 + (b - b2) * a
@@ -133,21 +125,40 @@ class Eyeliner(Subscriber):
         self.beginDrawing() 
         
     def glyphEditorDidOpen(self, info):
-        self.bgContainer = info['glyphEditor'].extensionContainer(
-            identifier="eyeliner.foreground", 
-            location="foreground", 
+        self.mgContainer = info['glyphEditor'].extensionContainer(
+            identifier="eyeliner.background", 
+            location="background", 
             clear=True
             )
+
+    def roboFontDidChangePreferences(self, info):
+        self.updateColorPrefs()
+
+    def updateColorPrefs(self):
+        self.gvbc = NSColorToRgba(
+            getDefaultColor("glyphViewBackgroundColor"))
+        self.gvmc = NSColorToRgba(
+            getDefaultColor("glyphViewMarginColor"))
+            
+        self.col_font_dim = self.getFlattenedAlpha(
+            NSColorToRgba(getDefaultColor("glyphViewFontMetricsStrokeColor")))
+        self.col_glob_guides = self.getFlattenedAlpha(
+            NSColorToRgba(getDefaultColor("glyphViewGlobalGuidesColor")))
+        self.col_loc_guides = self.getFlattenedAlpha(
+            NSColorToRgba(getDefaultColor("glyphViewLocalGuidesColor")))
+
+        self.col_blues = self.getDarkenedBlue(self.getFlattenedAlpha(NSColorToRgba(getDefaultColor("glyphViewBluesColor"))))
+        self.col_fBlues = self.getDarkenedBlue(self.getFlattenedAlpha(NSColorToRgba(getDefaultColor("glyphViewFamilyBluesColor"))))
         
     def beginDrawing(self):
         if self.g == None:
             return
         self.f = self.g.font
             
-        self.bgContainer.clearSublayers()
+        self.mgContainer.clearSublayers()
 
-        onCurves_on = getGlyphViewDisplaySettings()['OnCurvePoints']
-        anchors_on = getGlyphViewDisplaySettings()['Anchors']
+        onCurves_on = getGlyphViewDisplaySettings().get('OnCurvePoints')
+        anchors_on = getGlyphViewDisplaySettings().get('Anchors')
         
         # on-curve points
         if onCurves_on is True:
@@ -263,14 +274,19 @@ class Eyeliner(Subscriber):
                 
                 
     def drawEye(self, x, y, color, angle):
+
+        self.fill_color = self.gvbc
+        if x < 0 or x > self.g.width:
+            self.fill_color = self.gvmc
             
-        eye = self.bgContainer.appendSymbolSublayer(
+        eye = self.mgContainer.appendSymbolSublayer(
                 position        = (x, y),
                 rotation        = angle,
                 imageSettings   = dict(
                                     name        = "eyeliner.eye",
                                     radius      = rad_base, 
-                                    strokeColor = color 
+                                    strokeColor = color,
+                                    fillColor = (1,1,1,0) # self.fill_color
                                     )
                 )
         
