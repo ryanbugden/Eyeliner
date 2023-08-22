@@ -109,23 +109,39 @@ class Eyeliner(Subscriber):
 
 
     def build(self):
-        self.slice_tool_active = False
-        self.slice_coords = []
-        self.shift_down = False
-        self.down_point, self.drag_point = (0,0), (0,0)
-        self.blue_vals, self.fblue_vals = [], []
         self.font_dim = []
+        self.slice_coords = []
         self.oncurve_coords = []
         self.comp_oncurve_coords = []
         self.anc_coords = []
+
+        self.slice_tool_active = False
+        self.shift_down = False
+        self.down_point, self.drag_point = (0,0), (0,0)
+        self.blue_vals, self.fblue_vals = [], []
 
         self.update_base_sizes()
         self.update_blues_display_settings()
         self.oncurves_on = getGlyphViewDisplaySettings().get('OnCurvePoints')
         self.anchors_on = getGlyphViewDisplaySettings().get('Anchors')
         
-        self.container = self.getGlyphEditor().extensionContainer(
-                    identifier="eyeliner.foreground", 
+        self.oncurve_container = self.getGlyphEditor().extensionContainer(
+                    identifier="eyeliner.oncurves", 
+                    location="foreground", 
+                    clear=True
+                )
+        self.comp_container = self.getGlyphEditor().extensionContainer(
+                    identifier="eyeliner.components", 
+                    location="foreground", 
+                    clear=True
+                )
+        self.anchor_container = self.getGlyphEditor().extensionContainer(
+                    identifier="eyeliner.anchors", 
+                    location="foreground", 
+                    clear=True
+                )
+        self.slice_container = self.getGlyphEditor().extensionContainer(
+                    identifier="eyeliner.slice", 
                     location="foreground", 
                     clear=True
                 )
@@ -139,11 +155,16 @@ class Eyeliner(Subscriber):
             self.g = None
         self.update_color_prefs()
 
-        self.begin_drawing()
+        self.draw_oncurves()
+        self.draw_anchors()
+        self.draw_comp()
         
         
     def destroy(self):
-        self.container.clearSublayers()
+        self.oncurve_container.clearSublayers()
+        self.comp_container.clearSublayers()
+        self.anchor_container.clearSublayers()
+        self.slice_container.clearSublayers()
         
 
     def update_base_sizes(self):
@@ -194,21 +215,21 @@ class Eyeliner(Subscriber):
     def glyphEditorGlyphDidChangeOutline(self, info):
         self.g = info["glyph"]
         self.update_oncurve_info()
-        self.begin_drawing()
+        self.draw_oncurves()
 
 
     glyphEditorGlyphDidChangeContoursDelay = 0    
     def glyphEditorGlyphDidChangeContours(self, info):
         self.g = info["glyph"]
         self.update_oncurve_info()
-        self.begin_drawing()
+        self.draw_oncurves()
 
 
     glyphEditorGlyphDidChangeComponentsDelay = 0
     def glyphEditorGlyphDidChangeComponents(self, info):
         self.g = info["glyph"]
         self.update_component_info()
-        self.begin_drawing()
+        self.draw_comp()
 
 
     def update_component_info(self):
@@ -238,7 +259,7 @@ class Eyeliner(Subscriber):
     def glyphEditorGlyphDidChangeAnchors(self, info):
         self.g = info["glyph"]
         self.update_anchor_info()
-        self.begin_drawing()
+        self.draw_anchors()
 
 
     def update_anchor_info(self):
@@ -251,7 +272,18 @@ class Eyeliner(Subscriber):
     def glyphEditorGlyphDidChangeGuidelines(self, info):
         self.g = info["glyph"]
         self.update_guidelines_info()
-        self.begin_drawing()
+        self.draw_oncurves()
+        self.draw_anchors()
+        self.draw_comp()
+
+
+    glyphEditorFontDidChangeGuidelinesDelay = 0
+    def glyphEditorFontDidChangeGuidelines(self, info):
+        self.f = info["font"]
+        self.update_guidelines_info()
+        self.draw_oncurves()
+        self.draw_anchors()
+        self.draw_comp()
 
 
     def update_guidelines_info(self):
@@ -299,7 +331,9 @@ class Eyeliner(Subscriber):
         self.update_component_info()
         self.update_anchor_info()
         self.update_guidelines_info()
-        self.begin_drawing() 
+        self.draw_oncurves()
+        self.draw_anchors()
+        self.draw_comp()
         
         
     def glyphEditorDidChangeModifiers(self, info):
@@ -322,7 +356,7 @@ class Eyeliner(Subscriber):
         else:
             self.slice_tool_active = False
             
-        self.begin_drawing()
+        self.draw_slice_points()
         
         
     def glyphEditorDidMouseDrag(self, info):
@@ -332,16 +366,19 @@ class Eyeliner(Subscriber):
         self.slice_coords = []
         if self.slice_tool_active:
             point = self.slice_tool.sliceDrag
-            self.drag_point = (point.x, point.y)
-            slice_line = (self.down_point, self.drag_point)
-            intersects = IntersectGlyphWithLine(self.g, slice_line, canHaveComponent=False, addSideBearings=False)
-            for inter in intersects:
-                x, y = otRound(inter[0]), otRound(inter[1])
-                self.slice_coords.append((x,y)) 
+            if point:
+                self.drag_point = (point.x, point.y)
+                slice_line = (self.down_point, self.drag_point)
+                intersects = IntersectGlyphWithLine(self.g, slice_line, canHaveComponent=False, addSideBearings=False)
+                for inter in intersects:
+                    x, y = otRound(inter[0]), otRound(inter[1])
+                    self.slice_coords.append((x,y)) 
+            else:
+                self.slice_coords = []
         else:
             self.slice_coords = []
         
-        self.begin_drawing()
+        self.draw_slice_points()
         
         
     def glyphEditorDidMouseUp(self, info):
@@ -374,34 +411,45 @@ class Eyeliner(Subscriber):
         self.fblues_on = getGlyphViewDisplaySettings()['FamilyBlues']
 
 
-    def begin_drawing(self):
+    def draw_oncurves(self):
         if self.g == None:
             return
-            
-        self.container.clearSublayers()
-        
+        self.oncurve_container.clearSublayers()
         # On-curve points
         if self.oncurves_on is True:
             for coord in self.oncurve_coords:
-                self.check_alignment(coord)
-                        
+                self.check_alignment(self.oncurve_container, coord)
+                     
+    def draw_anchors(self):   
+        if self.g == None:
+            return
+        self.anchor_container.clearSublayers()
         # Anchors
         if self.anchors_on is True:
             for coord in self.anc_coords:
-                self.check_alignment(coord)
+                self.check_alignment(self.anchor_container, coord)
                 
+    def draw_slice_points(self):
+        if self.g == None:
+            return
+        self.slice_container.clearSublayers()
         # Slice tool intersections
         if self.slice_tool_active:
             for coord in self.slice_coords:
-                self.check_alignment(coord)
+                self.check_alignment(self.slice_container, coord)
                 
+
+    def draw_comp(self):
+        if self.g == None:
+            return
+        self.comp_container.clearSublayers()
         # Component points
         for coord in self.comp_oncurve_coords:
-            if self.check_alignment(coord) == True:
-                self.draw_component_point(coord)
+            if self.check_alignment(self.comp_container, coord) == True:
+                self.draw_component_point(self.comp_container, coord)
                 
                 
-    def check_alignment(self, coord):
+    def check_alignment(self, container, coord):
         alignment_match = False
         x, y = coord[0], coord[1]
 
@@ -414,33 +462,33 @@ class Eyeliner(Subscriber):
             # Global horizontal guides
             if otRound(y) in self.f_guide_ys.keys():
                 color = self.f_guide_ys[otRound(y)]
-                self.draw_eye(coord, color, angle)
+                self.draw_eye(container, coord, color, angle)
                 alignment_match = True
 
             # Local horizontal guides
             elif otRound(y) in self.g_guide_ys.keys():
                 color = self.g_guide_ys[otRound(y)]
-                self.draw_eye(coord, color, angle)
+                self.draw_eye(container, coord, color, angle)
                 alignment_match = True
 
             # Font dimensions
             elif otRound(y) in self.font_dim:
                 color = self.col_font_dim
-                self.draw_eye(coord, color, angle)
+                self.draw_eye(container, coord, color, angle)
                 alignment_match = True
 
             # Blues
             elif otRound(y) in self.blue_vals:
                 if self.blues_on is True:
                     color = self.col_blues
-                    self.draw_eye(coord, color, angle)
+                    self.draw_eye(container, coord, color, angle)
                     alignment_match = True
 
             # Family blues
             elif otRound(y) in self.fblue_vals:
                 if self.fblues_on is True:
                     color = self.col_fblues
-                    self.draw_eye(coord, color, angle)
+                    self.draw_eye(container, coord, color, angle)
                     alignment_match = True
 
             # ==== VERTICAL STUFF ==== #
@@ -448,13 +496,13 @@ class Eyeliner(Subscriber):
             # Global vertical guides
             if otRound(x) in self.f_guide_xs.keys():
                 color = self.f_guide_xs[otRound(x)]
-                self.draw_eye(coord, color, angle)
+                self.draw_eye(container, coord, color, angle)
                 alignment_match = True
 
             # Local vertical guides
             elif otRound(x) in self.g_guide_xs.keys():
                 color = self.g_guide_xs[otRound(x)]
-                self.draw_eye(coord, color, angle)
+                self.draw_eye(container, coord, color, angle)
                 alignment_match = True
 
             # ==== DIAGONAL STUFF ==== #
@@ -464,17 +512,17 @@ class Eyeliner(Subscriber):
                 if result:
                     ## Tested code to clean up the diagonal eye presentation
                     # diag_x, diag_y = get_diagonal_xy((gd.x, gd.y), angle, (x, y))  # Try to avoid the eye looking disjointed from the guide.
-                    self.draw_eye(coord, color, angle)
+                    self.draw_eye(container, coord, color, angle)
                     alignment_match = True
                     
         return alignment_match
                 
                 
-    def draw_eye(self, coord, color, angle):
-        eye = self.container.appendSymbolSublayer(
-                position        = (coord[0], coord[1]),
-                rotation        = angle,
-                imageSettings   = dict(
+    def draw_eye(self, container, coord, color, angle):
+        eye = container.appendSymbolSublayer(
+                position      = (coord[0], coord[1]),
+                rotation      = angle,
+                imageSettings = dict(
                                     name        = "eyeliner.eye",
                                     radius      = self.rad_base, 
                                     strokeColor = color,
@@ -483,16 +531,16 @@ class Eyeliner(Subscriber):
                 )
                 
                 
-    def draw_component_point(self, coord):
-        component_point = self.container.appendSymbolSublayer(
-                position=(coord[0], coord[1])
+    def draw_component_point(self, container, coord):
+        component_point  = container.appendSymbolSublayer(
+                position = (coord[0], coord[1])
                 )
 
         component_point.setImageSettings(
                 dict(
-                    name="oval",
-                    size=(otRound(self.point_radius*2), otRound(self.point_radius*2)),
-                    fillColor=tuple(self.component_color)
+                    name      = "oval",
+                    size      = (otRound(self.point_radius*2), otRound(self.point_radius*2)),
+                    fillColor = tuple(self.component_color)
                 )
             )
         
