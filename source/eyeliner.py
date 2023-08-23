@@ -108,13 +108,16 @@ class Eyeliner(Subscriber):
 
     def build(self):
         self.font_dim = []
-        self.slice_coords = []
+        self.tool_coords = []
         self.oncurve_coords = []
         self.comp_oncurve_coords = []
         self.anc_coords = []
 
+        self.slice_tool = None
+        self.shape_tool = None
         self.slice_tool_active = False
-        self.shift_down = False
+        self.shape_tool_active = False
+
         self.down_point, self.drag_point = (0,0), (0,0)
         self.blue_vals, self.fblue_vals = [], []
 
@@ -140,7 +143,7 @@ class Eyeliner(Subscriber):
                     location="foreground", 
                     clear=True
                 )
-        self.slice_container = self.glyph_editor.extensionContainer(
+        self.tool_container = self.glyph_editor.extensionContainer(
                     identifier="eyeliner.slice", 
                     location="foreground", 
                     clear=True
@@ -164,7 +167,7 @@ class Eyeliner(Subscriber):
         self.oncurve_container.clearSublayers()
         self.comp_container.clearSublayers()
         self.anchor_container.clearSublayers()
-        self.slice_container.clearSublayers()
+        self.tool_container.clearSublayers()
         
 
     def update_base_sizes(self):
@@ -269,35 +272,33 @@ class Eyeliner(Subscriber):
         self.draw_anchors()
         self.draw_comp()
         
-    
-    def glyphEditorDidChangeModifiers(self, info):
-        # Check Shift modifier
-        if info['deviceState']['shiftDown'] == 0:
-            self.shift_down = False
-        else:
-            self.shift_down = True
-        
         
     def glyphEditorDidMouseDown(self, info):
-        '''Support for slice tool eyes'''
+        '''Support for slice/shape tool eyes'''
         tool = info['lowLevelEvents'][0]['tool']
-    
+        
         if tool.__class__.__name__ == "SliceTool":
-            self.slice_tool = tool
             self.slice_tool_active = True
+            self.slice_tool = tool
             point = self.slice_tool.sliceDown
             self.down_point = (point.x, point.y)
+        elif tool.__class__.__name__ == "DrawGeometricShapesTool":
+            self.slice_tool_active = False
+            self.shape_tool_active = True
+            self.shape_tool = tool
         else:
             self.slice_tool_active = False
+            self.shape_tool_active = False
             
-        self.draw_slice_points()
+        self.draw_tool_points()
         
         
     def glyphEditorDidMouseDrag(self, info):
-        '''Support for slice tool eyes'''
+        '''Support for slice/shape tool eyes'''
         self.g = info["glyph"]
         
-        self.slice_coords = []
+        self.tool_coords = []
+        # Slice tool
         if self.slice_tool_active:
             point = self.slice_tool.sliceDrag
             if point:
@@ -306,19 +307,42 @@ class Eyeliner(Subscriber):
                 intersects = IntersectGlyphWithLine(self.g, slice_line, canHaveComponent=False, addSideBearings=False)
                 for inter in intersects:
                     x, y = otRound(inter[0]), otRound(inter[1])
-                    self.slice_coords.append((x,y)) 
+                    self.tool_coords.append((x,y)) 
             else:
-                self.slice_coords = []
+                self.tool_coords = []
+        # Shape tool
+        elif self.shape_tool_active:
+            tx, ty, tw, th = self.shape_tool.getRect()
+            if self.shape_tool.shape == "rect":
+                self.tool_coords = [
+                        (tx, ty),
+                        (tx + tw, ty),
+                        (tx, ty + th),
+                        (tx + tw, ty + th),
+                    ]    
+            elif self.shape_tool.shape == "oval":
+                self.tool_coords = [
+                        ((tx*2 + tw)/2, ty),
+                        (tx + tw, (ty*2 + th)/2),
+                        ((tx*2 + tw)/2, ty + th),
+                        (tx, (ty*2 + th)/2),
+                    ] 
+            # Round the points
+            for i, (coord_x, coord_y) in enumerate(self.tool_coords):
+                self.tool_coords[i] = (otRound(coord_x), otRound(coord_y))
         else:
-            self.slice_coords = []
+            self.tool_coords = []
         
-        self.draw_slice_points()
+        self.draw_tool_points()
         
         
     def glyphEditorDidMouseUp(self, info):
         '''Support for slice tool eyes'''
         # Remove sliced eyes on undo
         self.slice_tool_active = False
+        self.shape_tool_active = False
+        self.tool_coords = []
+        self.draw_tool_points()
 
 
     glyphEditorFontInfoDidChangeDelay = 0.2
@@ -428,14 +452,14 @@ class Eyeliner(Subscriber):
             for coord in self.anc_coords:
                 self.check_alignment(self.anchor_container, coord)
                 
-    def draw_slice_points(self):
+    def draw_tool_points(self):
         if self.g == None:
             return
-        self.slice_container.clearSublayers()
+        self.tool_container.clearSublayers()
         # Slice tool intersections
-        if self.slice_tool_active:
-            for coord in self.slice_coords:
-                self.check_alignment(self.slice_container, coord)
+        if self.slice_tool_active or self.shape_tool_active:
+            for coord in self.tool_coords:
+                self.check_alignment(self.tool_container, coord)
                 
 
     def draw_comp(self):
