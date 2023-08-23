@@ -14,7 +14,7 @@ import merz
 from merz.tools.drawingTools import NSImageDrawingTools
 
 
-def eyelinerSymbolFactory(
+def eyeliner_symbol(
         radius      = 5,
         stretch     = 0.7,
         strokeColor = (0, 0, 0, 1),
@@ -56,7 +56,7 @@ def eyelinerSymbolFactory(
     
     return bot.getImage()  # Return the image
     
-merz.SymbolImageVendor.registerImageFactory("eyeliner.eye", eyelinerSymbolFactory)
+merz.SymbolImageVendor.registerImageFactory("eyeliner.eye", eyeliner_symbol)
 
 
 def is_on_diagonal(pta, angle, ptb, tol=0.08):
@@ -173,11 +173,6 @@ class Eyeliner(Subscriber):
         self.point_radius = getDefault("glyphViewOnCurvePointsSize")
         self.rad_base = self.point_radius * 1.75  # Changing this value will impact how large the eye is, relative to your on-curve pt size
 
-        
-    def roboFontDidChangePreferences(self, info):
-        self.update_color_prefs()
-        self.update_base_sizes()
-
 
     def update_color_prefs(self):
         self.gvbc = getDefault("glyphViewBackgroundColor")
@@ -212,6 +207,11 @@ class Eyeliner(Subscriber):
         
         return (r/255, g/255, b/255, 1)
 
+        
+    def roboFontDidChangePreferences(self, info):
+        self.update_color_prefs()
+        self.update_base_sizes()
+
 
     glyphEditorGlyphDidChangeOutlineDelay = 0
     def glyphEditorGlyphDidChangeOutline(self, info):
@@ -234,40 +234,11 @@ class Eyeliner(Subscriber):
         self.draw_comp()
 
 
-    def update_component_info(self):
-        self.f = self.g.font
-
-        # Set up a decomposed glyph object
-        self.decomp_glyph = RGlyph()
-        self.decomp_glyph.width = self.g.width
-        decomp_pen = DecomposePointPen(self.f, self.decomp_glyph.getPointPen())
-        self.g.drawPoints(decomp_pen)
-        # Get all on-curve points for the component, and nothing else
-        digest_pen = DigestPointPen()
-        self.decomp_glyph.drawPoints(digest_pen)
-        self.comp_oncurve_coords = [entry[0] for entry in digest_pen.getDigest() if entry[1] != None and type(entry[0]) == tuple and entry[0] not in self.oncurve_coords] 
-
-
-    def update_oncurve_info(self):
-        self.oncurves_on = getGlyphViewDisplaySettings().get('OnCurvePoints')
-        # Use a digest point pen to get only on-curves
-        digest_pen = DigestPointPen()
-        self.g.drawPoints(digest_pen)
-        # Get all on-curve points
-        self.oncurve_coords = [entry[0] for entry in digest_pen.getDigest() if entry[1] != None and type(entry[0]) == tuple] 
-        
-
     glyphEditorGlyphDidChangeAnchorsDelay = 0
     def glyphEditorGlyphDidChangeAnchors(self, info):
         self.g = info["glyph"]
         self.update_anchor_info()
         self.draw_anchors()
-
-
-    def update_anchor_info(self):
-        '''Store updated anchor coordinates'''
-        self.anchors_on = getGlyphViewDisplaySettings().get('Anchors')
-        self.anc_coords = [(a.x, a.y) for a in self.g.anchors]
 
 
     glyphEditorGlyphDidChangeGuidelinesDelay = 0
@@ -286,42 +257,6 @@ class Eyeliner(Subscriber):
         self.draw_oncurves()
         self.draw_anchors()
         self.draw_comp()
-
-
-    def update_guidelines_info(self):
-        '''Store updated guideline coordinates'''
-        # Font guidelines
-        self.f_guide_xs    = {}
-        self.f_guide_ys    = {}
-        self.f_guide_diags = []
-        for guideline in self.f.guidelines:
-            if guideline.color:
-                guide_color = guideline.color
-            else:
-                guide_color = self.col_glob_guides
-            if guideline.angle in [0, 180]:
-                self.f_guide_ys[otRound(guideline.y)] = guide_color
-            elif guideline.angle in [90, 270]:
-                self.f_guide_xs[otRound(guideline.x)] = guide_color
-            else:
-                self.f_guide_diags.append(((guideline.x, guideline.y), guideline.angle, guide_color))
-
-        # Glyph guidelines
-        if self.g is not None:
-            self.g_guide_xs    = {}
-            self.g_guide_ys    = {}
-            self.g_guide_diags = []
-            for guideline in self.g.guidelines:
-                if guideline.color:
-                    guide_color = guideline.color
-                else:
-                    guide_color = self.col_loc_guides
-                if guideline.angle in [0, 180]:
-                    self.g_guide_ys[otRound(guideline.y)] = guide_color
-                elif guideline.angle in [90, 270]:
-                    self.g_guide_xs[otRound(guideline.x)] = guide_color
-                else:
-                    self.g_guide_diags.append(((guideline.x, guideline.y), guideline.angle, guide_color))
 
 
     glyphEditorDidSetGlyphDelay = 0.0001
@@ -391,6 +326,71 @@ class Eyeliner(Subscriber):
     glyphEditorFontInfoDidChangeDelay = 0.2
     def glyphEditorFontInfoDidChange(self, info):
         self.update_font_info()
+
+
+    def update_component_info(self):
+        self.f = self.g.font
+
+        # Set up a decomposed glyph object
+        self.decomp_glyph = RGlyph()
+        self.decomp_glyph.width = self.g.width
+        decomp_pen = DecomposePointPen(self.f, self.decomp_glyph.getPointPen())
+        self.g.drawPoints(decomp_pen)
+        # Get all on-curve points for the component, and nothing else
+        digest_pen = DigestPointPen()
+        self.decomp_glyph.drawPoints(digest_pen)
+        self.comp_oncurve_coords = [entry[0] for entry in digest_pen.getDigest() if entry[1] != None and type(entry[0]) == tuple and entry[0] not in self.oncurve_coords] 
+
+
+    def update_oncurve_info(self):
+        self.oncurves_on = getGlyphViewDisplaySettings().get('OnCurvePoints')
+        # Use a digest point pen to get only on-curves
+        digest_pen = DigestPointPen()
+        self.g.drawPoints(digest_pen)
+        # Get all on-curve points
+        self.oncurve_coords = [entry[0] for entry in digest_pen.getDigest() if entry[1] != None and type(entry[0]) == tuple] 
+
+
+    def update_anchor_info(self):
+        '''Store updated anchor coordinates'''
+        self.anchors_on = getGlyphViewDisplaySettings().get('Anchors')
+        self.anc_coords = [(a.x, a.y) for a in self.g.anchors]
+
+
+    def update_guidelines_info(self):
+        '''Store updated guideline coordinates'''
+        # Font guidelines
+        self.f_guide_xs    = {}
+        self.f_guide_ys    = {}
+        self.f_guide_diags = []
+        for guideline in self.f.guidelines:
+            if guideline.color:
+                guide_color = guideline.color
+            else:
+                guide_color = self.col_glob_guides
+            if guideline.angle in [0, 180]:
+                self.f_guide_ys[otRound(guideline.y)] = guide_color
+            elif guideline.angle in [90, 270]:
+                self.f_guide_xs[otRound(guideline.x)] = guide_color
+            else:
+                self.f_guide_diags.append(((guideline.x, guideline.y), guideline.angle, guide_color))
+
+        # Glyph guidelines
+        if self.g is not None:
+            self.g_guide_xs    = {}
+            self.g_guide_ys    = {}
+            self.g_guide_diags = []
+            for guideline in self.g.guidelines:
+                if guideline.color:
+                    guide_color = guideline.color
+                else:
+                    guide_color = self.col_loc_guides
+                if guideline.angle in [0, 180]:
+                    self.g_guide_ys[otRound(guideline.y)] = guide_color
+                elif guideline.angle in [90, 270]:
+                    self.g_guide_xs[otRound(guideline.x)] = guide_color
+                else:
+                    self.g_guide_diags.append(((guideline.x, guideline.y), guideline.angle, guide_color))
         
         
     def update_font_info(self):
