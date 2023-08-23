@@ -6,7 +6,7 @@ from fontParts.world import RGlyph
 
 from mojo.subscriber import Subscriber, registerGlyphEditorSubscriber
 from mojo.tools import IntersectGlyphWithLine
-from mojo.UI import CurrentGlyphWindow, getGlyphViewDisplaySettings
+from mojo.UI import CurrentGlyphWindow, getGlyphViewDisplaySettings, appearanceColorKey
 from mojo.pens import DecomposePointPen
 from fontPens.digestPointPen import DigestPointPen
 
@@ -158,9 +158,9 @@ class Eyeliner(Subscriber):
             self.g = None
         self.update_color_prefs()
         
-        self.draw_oncurves()
-        self.draw_anchors()
-        self.draw_comp()
+        self.check_oncurves()
+        self.check_anchors()
+        self.check_comp()
         
         
     def destroy(self):
@@ -179,14 +179,17 @@ class Eyeliner(Subscriber):
         self.gvbc = getDefault("glyphViewBackgroundColor")
         self.gvmc = getDefault("glyphViewMarginColor")
             
-        self.col_font_dim = self.get_flattened_alpha(getDefault("glyphViewFontMetricsStrokeColor"))
-        self.col_glob_guides = self.get_flattened_alpha(getDefault("glyphViewGlobalGuidesColor"))
-        self.col_loc_guides = self.get_flattened_alpha(getDefault("glyphViewLocalGuidesColor"))
+        self.col_font_dim = self.get_flattened_alpha(getDefault(appearanceColorKey("glyphViewFontMetricsStrokeColor")))
+        self.col_glob_guides = self.get_flattened_alpha(getDefault(appearanceColorKey("glyphViewGlobalGuidesColor")))
+        self.col_loc_guides = self.get_flattened_alpha(getDefault(appearanceColorKey("glyphViewLocalGuidesColor")))
 
-        self.col_blues = self.get_darkened_blue(self.get_flattened_alpha(getDefault("glyphViewBluesColor")))
-        self.col_fblues = self.get_darkened_blue(self.get_flattened_alpha(getDefault("glyphViewFamilyBluesColor")))
+        self.col_blues = self.get_darkened_blue(self.get_flattened_alpha(getDefault(appearanceColorKey("glyphViewBluesColor"))))
+        self.col_fblues = self.get_darkened_blue(self.get_flattened_alpha(getDefault(appearanceColorKey("glyphViewFamilyBluesColor"))))
         
-        self.component_color = self.get_flattened_alpha(getDefault("glyphViewComponentStrokeColor"))
+        self.col_component = self.get_flattened_alpha(getDefault(appearanceColorKey("glyphViewComponentStrokeColor")))
+
+        self.col_corner_pt = self.get_flattened_alpha(getDefault(appearanceColorKey("glyphViewCornerPointsFill")))
+        self.col_curve_pt = self.get_flattened_alpha(getDefault(appearanceColorKey("glyphViewCurvePointsFill")))
 
 
     def get_flattened_alpha(self, color):
@@ -214,50 +217,54 @@ class Eyeliner(Subscriber):
         self.update_base_sizes()
 
 
+    def roboFontAppearanceChanged(self, info):
+        self.update_color_prefs()
+
+
     glyphEditorGlyphDidChangeOutlineDelay = 0
     def glyphEditorGlyphDidChangeOutline(self, info):
         self.g = info["glyph"]
         self.update_oncurve_info()
-        self.draw_oncurves()
+        self.check_oncurves()
 
 
     glyphEditorGlyphDidChangeContoursDelay = 0    
     def glyphEditorGlyphDidChangeContours(self, info):
         self.g = info["glyph"]
         self.update_oncurve_info()
-        self.draw_oncurves()
+        self.check_oncurves()
 
 
     glyphEditorGlyphDidChangeComponentsDelay = 0
     def glyphEditorGlyphDidChangeComponents(self, info):
         self.g = info["glyph"]
         self.update_component_info()
-        self.draw_comp()
+        self.check_comp()
 
 
     glyphEditorGlyphDidChangeAnchorsDelay = 0
     def glyphEditorGlyphDidChangeAnchors(self, info):
         self.g = info["glyph"]
         self.update_anchor_info()
-        self.draw_anchors()
+        self.check_anchors()
 
 
     glyphEditorGlyphDidChangeGuidelinesDelay = 0
     def glyphEditorGlyphDidChangeGuidelines(self, info):
         self.g = info["glyph"]
         self.update_guidelines_info()
-        self.draw_oncurves()
-        self.draw_anchors()
-        self.draw_comp()
+        self.check_oncurves()
+        self.check_anchors()
+        self.check_comp()
 
 
     glyphEditorFontDidChangeGuidelinesDelay = 0
     def glyphEditorFontDidChangeGuidelines(self, info):
         self.f = info["font"]
         self.update_guidelines_info()
-        self.draw_oncurves()
-        self.draw_anchors()
-        self.draw_comp()
+        self.check_oncurves()
+        self.check_anchors()
+        self.check_comp()
 
 
     glyphEditorDidSetGlyphDelay = 0.0001
@@ -268,9 +275,9 @@ class Eyeliner(Subscriber):
         self.update_component_info()
         self.update_anchor_info()
         self.update_guidelines_info()
-        self.draw_oncurves()
-        self.draw_anchors()
-        self.draw_comp()
+        self.check_oncurves()
+        self.check_anchors()
+        self.check_comp()
         
         
     def glyphEditorDidMouseDown(self, info):
@@ -290,7 +297,7 @@ class Eyeliner(Subscriber):
             self.slice_tool_active = False
             self.shape_tool_active = False
             
-        self.draw_tool_points()
+        self.check_tool_points()
         
         
     def glyphEditorDidMouseDrag(self, info):
@@ -312,8 +319,14 @@ class Eyeliner(Subscriber):
                 self.tool_coords = []
         # Shape tool
         elif self.shape_tool_active:
+            if not self.shape_tool.getRect():
+                self.tool_coords = []
+                self.check_tool_points()
+                return
             tx, ty, tw, th = self.shape_tool.getRect()
             if self.shape_tool.shape == "rect":
+                self.shape_pt_color = self.col_corner_pt
+                self.shape_pt_shape = "rectangle"
                 self.tool_coords = [
                         (tx, ty),
                         (tx + tw, ty),
@@ -321,6 +334,8 @@ class Eyeliner(Subscriber):
                         (tx + tw, ty + th),
                     ]    
             elif self.shape_tool.shape == "oval":
+                self.shape_pt_color = self.col_curve_pt
+                self.shape_pt_shape = "oval"
                 self.tool_coords = [
                         ((tx*2 + tw)/2, ty),
                         (tx + tw, (ty*2 + th)/2),
@@ -333,16 +348,16 @@ class Eyeliner(Subscriber):
         else:
             self.tool_coords = []
         
-        self.draw_tool_points()
+        self.check_tool_points()
         
         
     def glyphEditorDidMouseUp(self, info):
-        '''Support for slice tool eyes'''
-        # Remove sliced eyes on undo
+        '''Support for slice/shape tool eyes'''
+        # Remove eyes on undo
         self.slice_tool_active = False
         self.shape_tool_active = False
         self.tool_coords = []
-        self.draw_tool_points()
+        self.check_tool_points()
 
 
     glyphEditorFontInfoDidChangeDelay = 0.2
@@ -434,7 +449,7 @@ class Eyeliner(Subscriber):
         self.fblues_on = getGlyphViewDisplaySettings()['FamilyBlues']
 
 
-    def draw_oncurves(self):
+    def check_oncurves(self):
         if self.g == None:
             return
         self.oncurve_container.clearSublayers()
@@ -442,8 +457,9 @@ class Eyeliner(Subscriber):
         if self.oncurves_on is True:
             for coord in self.oncurve_coords:
                 self.check_alignment(self.oncurve_container, coord)
+
                      
-    def draw_anchors(self):   
+    def check_anchors(self):   
         if self.g == None:
             return
         self.anchor_container.clearSublayers()
@@ -451,25 +467,31 @@ class Eyeliner(Subscriber):
         if self.anchors_on is True:
             for coord in self.anc_coords:
                 self.check_alignment(self.anchor_container, coord)
+
                 
-    def draw_tool_points(self):
+    def check_tool_points(self):
         if self.g == None:
             return
         self.tool_container.clearSublayers()
         # Slice tool intersections
-        if self.slice_tool_active or self.shape_tool_active:
+        if self.slice_tool_active:
             for coord in self.tool_coords:
                 self.check_alignment(self.tool_container, coord)
+        # Shape tool future points
+        elif self.shape_tool_active:
+            for coord in self.tool_coords:
+                if self.check_alignment(self.tool_container, coord) == True:
+                    self.draw_oncurve_pt(self.tool_container, coord, self.shape_pt_color, self.shape_pt_shape)
                 
 
-    def draw_comp(self):
+    def check_comp(self):
         if self.g == None:
             return
         self.comp_container.clearSublayers()
         # Component points
         for coord in self.comp_oncurve_coords:
             if self.check_alignment(self.comp_container, coord) == True:
-                self.draw_component_point(self.comp_container, coord)
+                self.draw_oncurve_pt(self.comp_container, coord, self.col_component, "oval")
                 
                 
     def check_alignment(self, container, coord):
@@ -554,16 +576,15 @@ class Eyeliner(Subscriber):
                 )
                 
                 
-    def draw_component_point(self, container, coord):
+    def draw_oncurve_pt(self, container, coord, color, shape):
         component_point  = container.appendSymbolSublayer(
                 position = (coord[0], coord[1])
                 )
-
         component_point.setImageSettings(
                 dict(
-                    name      = "oval",
+                    name      = shape,
                     size      = (otRound(self.point_radius*2), otRound(self.point_radius*2)),
-                    fillColor = tuple(self.component_color)
+                    fillColor = tuple(color)
                 )
             )
         
