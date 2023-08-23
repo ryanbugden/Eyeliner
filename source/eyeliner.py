@@ -398,7 +398,6 @@ class Eyeliner(Subscriber):
             self.f.info.descender, 0, self.f.info.xHeight,
             self.f.info.ascender, self.f.info.capHeight
             ]
-        print("Updating font dimensions and blue values.")
         
         # Get blue y's and whether they're set to be displayed
         self.blue_vals  = self.f.info.postscriptBlueValues + self.f.info.postscriptOtherBlues

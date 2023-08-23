@@ -21,10 +21,10 @@ def eyeliner_symbol(
         strokeWidth = 1,
         fillColor   = (1, 1, 1, 0)
         ):
-    # Calcute the width and height
+    # Calculate the width and height
     width  = radius * 6 * stretch * 2 + strokeWidth * 2
     height = radius * 2 + strokeWidth * 2
-    # Create a image draw bot 
+    # Create a NSImage drawing bot 
     bot = NSImageDrawingTools((width, height))
     # Get a pen
     pen = bot.BezierPath()
@@ -47,14 +47,12 @@ def eyeliner_symbol(
         (2 * radius * stretch, 0),
         (6 * radius * stretch, 0))
     pen.closePath()
-
     bot.fill(*fillColor)
     bot.stroke(*strokeColor)
     bot.strokeWidth(strokeWidth)
     bot.translate(width / 2 + 0.25, height / 2 + 0.25)
     bot.drawPath(pen)
-    
-    return bot.getImage()  # Return the image
+    return bot.getImage()
     
 merz.SymbolImageVendor.registerImageFactory("eyeliner.eye", eyeliner_symbol)
 
@@ -400,7 +398,6 @@ class Eyeliner(Subscriber):
             self.f.info.descender, 0, self.f.info.xHeight,
             self.f.info.ascender, self.f.info.capHeight
             ]
-        print("Updating font dimensions and blue values.")
         
         # Get blue y's and whether they're set to be displayed
         self.blue_vals  = self.f.info.postscriptBlueValues + self.f.info.postscriptOtherBlues
