@@ -1,12 +1,11 @@
 import math
 from colorsys import rgb_to_hsv, hsv_to_rgb
-from lib.tools.defaults import getDefault
 from fontTools.misc.fixedTools import otRound
 from fontParts.world import RGlyph
 
 from mojo.subscriber import Subscriber, registerGlyphEditorSubscriber
 from mojo.tools import IntersectGlyphWithLine
-from mojo.UI import CurrentGlyphWindow, getGlyphViewDisplaySettings, appearanceColorKey
+from mojo.UI import CurrentGlyphWindow, getGlyphViewDisplaySettings, getDefault, appearanceColorKey
 from mojo.pens import DecomposePointPen
 from fontPens.digestPointPen import DigestPointPen
 
