@@ -219,6 +219,11 @@ class Eyeliner(Subscriber):
 
     def roboFontAppearanceChanged(self, info):
         self.update_color_prefs()
+        # Update guidelines have color attribute, so update that info, and check things against it.
+        self.update_guidelines_info()
+        self.check_oncurves()
+        self.check_anchors()
+        self.check_comp()
 
 
     glyphEditorGlyphDidChangeOutlineDelay = 0
