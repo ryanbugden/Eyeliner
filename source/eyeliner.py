@@ -110,12 +110,16 @@ class Eyeliner(Subscriber):
         self.tool_coords = []
         self.oncurve_coords = []
         self.comp_oncurve_coords = []
+        self.transm_oncurve_coords = []
+
         self.anc_coords = []
 
         self.slice_tool = None
         self.shape_tool = None
+        self.transmutor_tool = None
         self.slice_tool_active = False
         self.shape_tool_active = False
+        self.transmutor_active = False
 
         self.down_point, self.drag_point = (0,0), (0,0)
         self.blue_vals, self.fblue_vals = [], []
@@ -290,16 +294,25 @@ class Eyeliner(Subscriber):
         
         if tool.__class__.__name__ == "SliceTool":
             self.slice_tool_active = True
+            self.shape_tool_active = False
+            self.transmutor_active = False
             self.slice_tool = tool
             point = self.slice_tool.sliceDown
             self.down_point = (point.x, point.y)
         elif tool.__class__.__name__ == "DrawGeometricShapesTool":
             self.slice_tool_active = False
             self.shape_tool_active = True
+            self.transmutor_active = False
             self.shape_tool = tool
+        elif tool.__class__.__name__ == "TransmutorToolController":
+            self.slice_tool_active = False
+            self.shape_tool_active = False
+            self.transmutor_active = True
+            self.transmutor_tool = tool
         else:
             self.slice_tool_active = False
             self.shape_tool_active = False
+            self.transmutor_active = False
             
         self.check_tool_points()
         
@@ -349,6 +362,20 @@ class Eyeliner(Subscriber):
             # Round the points
             for i, (coord_x, coord_y) in enumerate(self.tool_coords):
                 self.tool_coords[i] = (otRound(coord_x), otRound(coord_y))
+        # Transmutor
+        elif self.transmutor_active:
+            model = self.transmutor_tool.model
+            if model:
+                self.transmutor_color = model.scaledGlyphColor
+                scaled_glyph = model.getScaledGlyph()
+                if scaled_glyph:
+                    scaled_glyph.moveBy((model.offsetX, model.offsetY))
+                    digest_pen = DigestPointPen()
+                    scaled_glyph.drawPoints(digest_pen)
+                    self.tool_coords = [entry[0] for entry in digest_pen.getDigest() if entry[1] != None and type(entry[0]) == tuple and entry[0] not in self.tool_coords] 
+                    self.tool_coords = [(otRound(x), otRound(y)) for (x, y) in self.tool_coords]
+            else:
+                self.tool_coords = []
         else:
             self.tool_coords = []
         
@@ -360,11 +387,13 @@ class Eyeliner(Subscriber):
         # Remove eyes on undo
         self.slice_tool_active = False
         self.shape_tool_active = False
-        self.tool_coords = []
+        # We want the points to remain on mouse-up with Transmutor
+        if not self.transmutor_active:
+            self.tool_coords = []
         self.check_tool_points()
 
 
-    glyphEditorFontInfoDidChangeDelay = 0.2
+    glyphEditorFontInfoDidChangeDelay = 0.1
     def glyphEditorFontInfoDidChange(self, info):
         self.update_font_info()
 
@@ -486,6 +515,11 @@ class Eyeliner(Subscriber):
             for coord in self.tool_coords:
                 if self.check_alignment(self.tool_container, coord) == True:
                     self.draw_oncurve_pt(self.tool_container, coord, self.shape_pt_color, self.shape_pt_shape)
+        # Transmutor future points
+        elif self.transmutor_active:
+            for coord in self.tool_coords:
+                if self.check_alignment(self.tool_container, coord) == True:
+                    self.draw_oncurve_pt(self.tool_container, coord, self.transmutor_color, "oval")
                 
 
     def check_comp(self):
