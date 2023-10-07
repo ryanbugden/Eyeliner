@@ -374,16 +374,17 @@ class Eyeliner(Subscriber):
 
     def update_transmutor_coords(self):
         if self.trans_subscriber:
+            if not hasattr(self.trans_subscriber, "model"):
+                return
             model = self.trans_subscriber.model
-            if model:
-                self.trans_color = model.scaledGlyphColor
-                scaled_glyph = model.getScaledGlyph()
-                if scaled_glyph:
-                    scaled_glyph.moveBy((model.offsetX, model.offsetY))
-                    digest_pen = DigestPointPen()
-                    scaled_glyph.drawPoints(digest_pen)
-                    self.trans_coords = [entry[0] for entry in digest_pen.getDigest() if entry[1] != None and type(entry[0]) == tuple and entry[0] not in self.trans_coords] 
-                    self.trans_coords = [(otRound(x), otRound(y)) for (x, y) in self.trans_coords]
+            self.trans_color = model.scaledGlyphColor
+            scaled_glyph = model.getScaledGlyph()
+            if scaled_glyph:
+                scaled_glyph.moveBy((model.offsetX, model.offsetY))
+                digest_pen = DigestPointPen()
+                scaled_glyph.drawPoints(digest_pen)
+                self.trans_coords = [entry[0] for entry in digest_pen.getDigest() if entry[1] != None and type(entry[0]) == tuple and entry[0] not in self.trans_coords] 
+                self.trans_coords = [(otRound(x), otRound(y)) for (x, y) in self.trans_coords]
         
         
     def glyphEditorDidMouseUp(self, info):
