@@ -111,8 +111,10 @@ class Eyeliner(Subscriber):
         self.oncurve_coords = []
         self.comp_oncurve_coords = []
         self.trans_coords = []
-
+        self.overlapper_coords = []
         self.anc_coords = []
+        
+        self.overlapper_color = (0,0,0,1)
 
         self.slice_tool = None
         self.shape_tool = None
@@ -150,6 +152,11 @@ class Eyeliner(Subscriber):
                     location="foreground", 
                     clear=True
                 )
+        self.overlapper_container = self.glyph_editor.extensionContainer(
+                    identifier="eyeliner.overlapperContainer", 
+                    location="foreground", 
+                    clear=True
+                )
         
 
     def started(self):
@@ -170,6 +177,7 @@ class Eyeliner(Subscriber):
         self.comp_container.clearSublayers()
         self.anchor_container.clearSublayers()
         self.tool_container.clearSublayers()
+        self.overlapper_container.clearSublayers()
         
 
     def update_base_sizes(self):
@@ -401,6 +409,33 @@ class Eyeliner(Subscriber):
     glyphEditorFontInfoDidChangeDelay = 0.1
     def glyphEditorFontInfoDidChange(self, info):
         self.update_font_info()
+        
+
+    overlapperDidDrawDelay = 0
+    def overlapperDidDraw(self, info):
+        self.overlapper_coords = []
+        glyph = info['lowLevelEvents'][0]['overlapGlyph']
+        self.overlapper_color = info['lowLevelEvents'][0]['strokeColor']
+        if glyph:
+            digest_pen = DigestPointPen()
+            glyph.drawPoints(digest_pen)
+            self.overlapper_coords = [entry[0] for entry in digest_pen.getDigest() if entry[1] != None and type(entry[0]) == tuple and entry[0] not in self.overlapper_coords] 
+            self.overlapper_coords = [(otRound(x), otRound(y)) for (x, y) in self.overlapper_coords if (x, y) not in self.oncurve_coords]
+            self.check_overlapper_points()
+            
+            
+    def overlapperDidStopDrawing(self, info):
+        self.overlapper_coords = [] 
+        self.check_overlapper_points()
+
+
+    def check_overlapper_points(self):
+        self.overlapper_container.clearSublayers()
+        # Overlapper future points
+        if self.overlapper_coords:
+            for coord in self.overlapper_coords:
+                if self.check_alignment(self.overlapper_container, coord) == True:
+                    self.draw_oncurve_pt(self.overlapper_container, coord, self.overlapper_color, "oval")
 
 
     def update_component_info(self):
