@@ -435,7 +435,7 @@ class Eyeliner(Subscriber):
         if self.overlapper_coords:
             for coord in self.overlapper_coords:
                 if self.check_alignment(self.overlapper_container, coord) == True:
-                    self.draw_oncurve_pt(self.overlapper_container, coord, self.overlapper_color, "oval")
+                    self.draw_oncurve_pt(self.overlapper_container, coord, self.overlapper_color, "rectangle")
 
 
     def update_component_info(self):
