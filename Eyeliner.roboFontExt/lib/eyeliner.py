@@ -431,6 +431,8 @@ class Eyeliner(Subscriber):
 
     def check_overlapper_points(self):
         self.overlapper_container.clearSublayers()
+        if self.g == None or CurrentGlyphWindow() != self.glyph_editor:
+            return
         # Overlapper future points
         if self.overlapper_coords:
             for coord in self.overlapper_coords:
@@ -543,7 +545,7 @@ class Eyeliner(Subscriber):
 
                 
     def check_tool_points(self):
-        if self.g == None:
+        if self.g == None or CurrentGlyphWindow() != self.glyph_editor:
             return
         self.tool_container.clearSublayers()
         # Slice tool intersections
