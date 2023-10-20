@@ -332,6 +332,7 @@ class Eyeliner(Subscriber):
     def glyphEditorDidMouseDrag(self, info):
         '''Support for slice/shape tool eyes'''
         self.g = info["glyph"]
+        self.tool_coords = []
         
         # Slice tool
         if self.slice_tool_active:
