@@ -298,13 +298,15 @@ class Eyeliner(Subscriber):
     def glyphEditorDidMouseDown(self, info):
         '''Support for slice/shape tool eyes'''
         tool = info['lowLevelEvents'][0]['tool']
-
+        self.tool_coords = []
+        
         if tool.__class__.__name__ == "SliceTool":
             self.slice_tool_active = True
             self.shape_tool_active = False
             self.slice_tool = tool
             point = self.slice_tool.sliceDown
-            self.down_point = (point.x, point.y)
+            if point:
+                self.down_point = (point.x, point.y)
         elif tool.__class__.__name__ == "DrawGeometricShapesTool":
             self.slice_tool_active = False
             self.shape_tool_active = True
@@ -331,7 +333,6 @@ class Eyeliner(Subscriber):
         '''Support for slice/shape tool eyes'''
         self.g = info["glyph"]
         
-        self.tool_coords = []
         # Slice tool
         if self.slice_tool_active:
             point = self.slice_tool.sliceDrag
