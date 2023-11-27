@@ -113,6 +113,13 @@ class Eyeliner(Subscriber):
         self.trans_coords = []
         self.overlapper_coords = []
         self.anc_coords = []
+
+        self.f_guide_xs    = {}
+        self.f_guide_ys    = {}
+        self.f_guide_diags = []
+        self.g_guide_xs    = {}
+        self.g_guide_ys    = {}
+        self.g_guide_diags = []
         
         self.overlapper_color = (0,0,0,1)
 
@@ -452,8 +459,9 @@ class Eyeliner(Subscriber):
         self.g.drawPoints(decomp_pen)
         # Get all on-curve points for the component, and nothing else
         digest_pen = DigestPointPen()
-        self.decomp_glyph.drawPoints(digest_pen)
-        self.comp_oncurve_coords = [entry[0] for entry in digest_pen.getDigest() if entry[1] != None and type(entry[0]) == tuple and entry[0] not in self.oncurve_coords] 
+        if self.decomp_glyph:
+            self.decomp_glyph.drawPoints(digest_pen)
+            self.comp_oncurve_coords = [entry[0] for entry in digest_pen.getDigest() if entry[1] != None and type(entry[0]) == tuple and entry[0] not in self.oncurve_coords] 
 
 
     def update_oncurve_info(self):
