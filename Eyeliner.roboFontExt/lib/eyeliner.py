@@ -292,6 +292,8 @@ class Eyeliner(Subscriber):
     glyphEditorDidSetGlyphDelay = 0.0001
     def glyphEditorDidSetGlyph(self, info):
         self.g = info["glyph"]
+        if self.g == None:
+            return
         # Update on-curves before component info.
         self.update_oncurve_info()
         self.update_component_info()
