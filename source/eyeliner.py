@@ -452,31 +452,40 @@ class Eyeliner(Subscriber):
     def update_component_info(self):
         self.f = self.g.font
 
-        # Set up a decomposed glyph object
-        self.decomp_glyph = RGlyph()
-        self.decomp_glyph.width = self.g.width
-        decomp_pen = DecomposePointPen(self.f, self.decomp_glyph.getPointPen())
-        self.g.drawPoints(decomp_pen)
-        # Get all on-curve points for the component, and nothing else
-        digest_pen = DigestPointPen()
-        if self.decomp_glyph:
+        if self.g.components:
+            # Set up a decomposed glyph object
+            self.decomp_glyph = RGlyph()
+            self.decomp_glyph.width = self.g.width
+            decomp_pen = DecomposePointPen(self.f, self.decomp_glyph.getPointPen())
+            self.g.drawPoints(decomp_pen)
+            # Get all on-curve points for the component, and nothing else
+            digest_pen = DigestPointPen()
             self.decomp_glyph.drawPoints(digest_pen)
             self.comp_oncurve_coords = [entry[0] for entry in digest_pen.getDigest() if entry[1] != None and type(entry[0]) == tuple and entry[0] not in self.oncurve_coords] 
+        else:
+            self.comp_oncurve_coords = [] 
 
 
     def update_oncurve_info(self):
         self.oncurves_on = getGlyphViewDisplaySettings().get('OnCurvePoints')
-        # Use a digest point pen to get only on-curves
-        digest_pen = DigestPointPen()
-        self.g.drawPoints(digest_pen)
-        # Get all on-curve points
-        self.oncurve_coords = [entry[0] for entry in digest_pen.getDigest() if entry[1] != None and type(entry[0]) == tuple] 
+        
+        if self.g.contours:
+            # Use a digest point pen to get only on-curves
+            digest_pen = DigestPointPen()
+            self.g.drawPoints(digest_pen)
+            # Get all on-curve points
+            self.oncurve_coords = [entry[0] for entry in digest_pen.getDigest() if entry[1] != None and type(entry[0]) == tuple] 
+        else:
+            self.oncurve_coords = [] 
 
 
     def update_anchor_info(self):
         '''Store updated anchor coordinates'''
         self.anchors_on = getGlyphViewDisplaySettings().get('Anchors')
-        self.anc_coords = [(a.x, a.y) for a in self.g.anchors]
+        if self.g.anchors:
+            self.anc_coords = [(a.x, a.y) for a in self.g.anchors]
+        else:
+            self.anc_coords = []
 
 
     def update_guidelines_info(self):
