@@ -3,7 +3,7 @@
 # -----------------
 
 name                = "Eyeliner"
-version             = "2.8.2"
+version             = "2.8.3"
 developer           = "Ryan Bugden"
 developer_url       = "https://ryanbugden.com"
 rf_version          = "4.4b"
