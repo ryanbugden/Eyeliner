@@ -3,10 +3,10 @@
 # -----------------
 
 name                = "Eyeliner"
-version             = "2.8.3"
+version             = "2.8.4"
 developer           = "Ryan Bugden"
 developer_url       = "https://ryanbugden.com"
-rf_version          = "4.4b"
+rf_version          = "4.5b"
 pyc_only            = False
 menu_items          = []
 main_script         = "eyeliner.py"

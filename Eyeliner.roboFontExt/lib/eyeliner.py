@@ -125,7 +125,7 @@ class Eyeliner(Subscriber):
 
         self.slice_tool = None
         self.shape_tool = None
-        self.trans_subscriber = None
+        # self.trans_subscriber = None
         self.slice_tool_active = False
         self.shape_tool_active = False
 
@@ -161,6 +161,11 @@ class Eyeliner(Subscriber):
                 )
         self.overlapper_container = self.glyph_editor.extensionContainer(
                     identifier="eyeliner.overlapperContainer", 
+                    location="foreground", 
+                    clear=True
+                )
+        self.transmutor_container = self.glyph_editor.extensionContainer(
+                    identifier="eyeliner.transmutorContainer", 
                     location="foreground", 
                     clear=True
                 )
@@ -331,16 +336,16 @@ class Eyeliner(Subscriber):
             self.slice_tool_active = False
             self.shape_tool_active = False
 
-        # Set up support for transmutor
-        names_and_objects = {}
-        for s in listRegisteredSubscribers():
-            names_and_objects.update({s.getIdentifier().split('.')[0]: s})
-        if 'TransmutorToolController' in names_and_objects.keys():
-            self.trans_subscriber = names_and_objects['TransmutorToolController']
-            self.update_transmutor_coords()
-        else:
-            self.trans_subscriber = None
-            self.trans_coords = []
+        # # Set up support for transmutor
+        # names_and_objects = {}
+        # for s in listRegisteredSubscribers():
+        #     names_and_objects.update({s.getIdentifier().split('.')[0]: s})
+        # if 'TransmutorToolController' in names_and_objects.keys():
+        #     self.trans_subscriber = names_and_objects['TransmutorToolController']
+        #     self.update_transmutor_coords()
+        # else:
+        #     self.trans_subscriber = None
+        #     self.trans_coords = []
             
         self.check_tool_points()
         
@@ -393,24 +398,12 @@ class Eyeliner(Subscriber):
         else:
             self.tool_coords = []
 
-        # Transmutor
-        self.update_transmutor_coords()
+        # # Transmutor
+        # self.update_transmutor_coords()
         
         self.check_tool_points()
 
-    def update_transmutor_coords(self):
-        if self.trans_subscriber:
-            if not hasattr(self.trans_subscriber, "model"):
-                return
-            model = self.trans_subscriber.model
-            self.trans_color = model.scaledGlyphColor
-            scaled_glyph = model.getScaledGlyph()
-            if scaled_glyph:
-                scaled_glyph.moveBy((model.offsetX, model.offsetY))
-                digest_pen = DigestPointPen()
-                scaled_glyph.drawPoints(digest_pen)
-                self.trans_coords = [entry[0] for entry in digest_pen.getDigest() if entry[1] != None and type(entry[0]) == tuple and entry[0] not in self.trans_coords] 
-                self.trans_coords = [(otRound(x), otRound(y)) for (x, y) in self.trans_coords]
+
         
         
     def glyphEditorDidMouseUp(self, info):
@@ -418,9 +411,9 @@ class Eyeliner(Subscriber):
         # Remove eyes on undo
         self.slice_tool_active = False
         self.shape_tool_active = False
-        # We want the points to remain on mouse-up with Transmutor
-        if not self.trans_subscriber:
-            self.trans_coords = []
+        # # We want the points to remain on mouse-up with Transmutor
+        # if not self.trans_subscriber:
+        #     self.trans_coords = []
         self.check_tool_points()
 
 
@@ -456,6 +449,37 @@ class Eyeliner(Subscriber):
             for coord in self.overlapper_coords:
                 if self.check_alignment(self.overlapper_container, coord) == True:
                     self.draw_oncurve_pt(self.overlapper_container, coord, self.overlapper_color, "rectangle")
+
+
+    transmutorDidDrawDelay = 0
+    def transmutorDidDraw(self, info):
+        self.transmutor_coords = []
+        offset = info['lowLevelEvents'][0]['offset']
+        glyph = info['lowLevelEvents'][0]['transmutorGlyph']
+        self.transmutor_color = info['lowLevelEvents'][0]['color']
+        glyph.moveBy(offset)
+        if glyph:
+            digest_pen = DigestPointPen()
+            glyph.drawPoints(digest_pen)
+            self.transmutor_coords = [entry[0] for entry in digest_pen.getDigest() if entry[1] != None and type(entry[0]) == tuple and entry[0] not in self.transmutor_coords] 
+            self.transmutor_coords = [(otRound(x), otRound(y)) for (x, y) in self.transmutor_coords if (x, y) not in self.oncurve_coords]
+            self.check_transmutor_points()
+            
+            
+    def transmutorDidStopDrawing(self, info):
+        self.transmutor_coords = [] 
+        self.check_transmutor_points()
+
+
+    def check_transmutor_points(self):
+        self.transmutor_container.clearSublayers()
+        if self.g == None or CurrentGlyphWindow() != self.glyph_editor:
+            return
+        # Tranmutor future points
+        if self.transmutor_coords:
+            for coord in self.transmutor_coords:
+                if self.check_alignment(self.transmutor_container, coord) == True:
+                    self.draw_oncurve_pt(self.transmutor_container, coord, self.transmutor_color, "rectangle")
 
 
     def update_component_info(self):
@@ -580,11 +604,11 @@ class Eyeliner(Subscriber):
             for coord in self.tool_coords:
                 if self.check_alignment(self.tool_container, coord) == True:
                     self.draw_oncurve_pt(self.tool_container, coord, self.shape_pt_color, self.shape_pt_shape)
-        # Transmutor future points
-        if self.trans_subscriber:
-            for coord in self.trans_coords:
-                if self.check_alignment(self.tool_container, coord) == True:
-                    self.draw_oncurve_pt(self.tool_container, coord, self.trans_color, "oval")
+        # # Transmutor future points
+        # if self.trans_subscriber:
+        #     for coord in self.trans_coords:
+        #         if self.check_alignment(self.tool_container, coord) == True:
+        #             self.draw_oncurve_pt(self.tool_container, coord, self.trans_color, "oval")
                 
 
     def check_comp(self):
