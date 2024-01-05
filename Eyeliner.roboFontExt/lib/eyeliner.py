@@ -83,24 +83,6 @@ def is_on_diagonal(pta, angle, ptb, tol=0.08):
     return False
 
 
-# # Draw the eye perfectly on the diagonal. Keeps input pt x
-# def get_diagonal_xy(pta, angle, ptb):
-#     if pta == ptb: 
-#         return ptb[1]
-
-#     y_off = math.tan(math.radians(angle)) * (ptb[0]- pta[0])
-#     y_from_x = pta[1] + y_off
-
-#     x_off =  (ptb[1]- pta[1])/ math.tan(math.radians(angle)) 
-#     x_from_y = pta[0] + x_off
-
-#     if abs(x_from_y - ptb[0]) > abs(y_from_x - ptb[1]):
-#         diag_x, diag_y = x_from_y, ptb[1]
-#     else:
-#         diag_x, diag_y = ptb[0], y_from_x
-
-#     return diag_x, diag_y
-
 
 class Eyeliner(Subscriber):
 
@@ -125,7 +107,6 @@ class Eyeliner(Subscriber):
 
         self.slice_tool = None
         self.shape_tool = None
-        # self.trans_subscriber = None
         self.slice_tool_active = False
         self.shape_tool_active = False
 
@@ -335,17 +316,6 @@ class Eyeliner(Subscriber):
         else:
             self.slice_tool_active = False
             self.shape_tool_active = False
-
-        # # Set up support for transmutor
-        # names_and_objects = {}
-        # for s in listRegisteredSubscribers():
-        #     names_and_objects.update({s.getIdentifier().split('.')[0]: s})
-        # if 'TransmutorToolController' in names_and_objects.keys():
-        #     self.trans_subscriber = names_and_objects['TransmutorToolController']
-        #     self.update_transmutor_coords()
-        # else:
-        #     self.trans_subscriber = None
-        #     self.trans_coords = []
             
         self.check_tool_points()
         
@@ -398,12 +368,7 @@ class Eyeliner(Subscriber):
         else:
             self.tool_coords = []
 
-        # # Transmutor
-        # self.update_transmutor_coords()
-        
         self.check_tool_points()
-
-
         
         
     def glyphEditorDidMouseUp(self, info):
@@ -411,9 +376,7 @@ class Eyeliner(Subscriber):
         # Remove eyes on undo
         self.slice_tool_active = False
         self.shape_tool_active = False
-        # # We want the points to remain on mouse-up with Transmutor
-        # if not self.trans_subscriber:
-        #     self.trans_coords = []
+
         self.check_tool_points()
 
 
@@ -604,11 +567,6 @@ class Eyeliner(Subscriber):
             for coord in self.tool_coords:
                 if self.check_alignment(self.tool_container, coord) == True:
                     self.draw_oncurve_pt(self.tool_container, coord, self.shape_pt_color, self.shape_pt_shape)
-        # # Transmutor future points
-        # if self.trans_subscriber:
-        #     for coord in self.trans_coords:
-        #         if self.check_alignment(self.tool_container, coord) == True:
-        #             self.draw_oncurve_pt(self.tool_container, coord, self.trans_color, "oval")
                 
 
     def check_comp(self):
