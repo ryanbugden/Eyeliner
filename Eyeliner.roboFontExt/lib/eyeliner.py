@@ -292,6 +292,7 @@ class Eyeliner(Subscriber):
         self.update_component_info()
         self.update_anchor_info()
         self.update_guidelines_info()
+        self.update_font_info()
         self.check_oncurves()
         self.check_anchors()
         self.check_comp()
