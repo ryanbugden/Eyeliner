@@ -3,12 +3,12 @@ developer: Ryan Bugden
 developerURL: http://github.com/ryanbugden
 launchAtStartUp: true
 mainScript: main.py
-version: 3.0
+version: 3.0b
 addToMenu:
 - path: settings.py
   preferredName: Settings
   shortKey: ""
 html: true
-timeStamp: 1740709062
+timeStamp: 1740786633
 requiresVersionMajor: '4'
 requiresVersionMinor: '5'
