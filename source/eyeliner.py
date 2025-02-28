@@ -340,11 +340,12 @@ class Eyeliner(Subscriber):
                 self.tool_coords = []
         # Shape tool
         elif self.shape_tool_active:
-            if not self.shape_tool.getRect():
+            try:
+                tx, ty, tw, th = self.shape_tool.getRect()
+            except:
                 self.tool_coords = []
                 self.check_tool_points()
                 return
-            tx, ty, tw, th = self.shape_tool.getRect()
             if self.shape_tool.shape == "rect":
                 self.shape_pt_color = self.col_corner_pt
                 self.shape_pt_shape = "rectangle"
@@ -384,7 +385,10 @@ class Eyeliner(Subscriber):
     glyphEditorFontInfoDidChangeDelay = 0.1
     def glyphEditorFontInfoDidChange(self, info):
         self.update_font_info()
-        
+    fontInfoDidChangeValueDelay = 0.1
+    def fontInfoDidChangeValue(self, info):
+        self.update_font_info()
+
 
     overlapperDidDrawDelay = 0
     def overlapperDidDraw(self, info):
