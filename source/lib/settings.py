@@ -1,44 +1,8 @@
 import ezui
-from colorsys import rgb_to_hsv, hsv_to_rgb
+from mojo.subscriber import getRegisteredSubscriberEvents, registerSubscriberEvent
 from mojo.extensions import getExtensionDefault, setExtensionDefault
-from mojo.UI import getDefault
-
-
-
-def get_flattened_alpha(color):
-    # Flatten transparency of eye, using background color preference
-    gvbc = getDefault("glyphViewBackgroundColor")
-    r, g, b, a = color
-    r2, g2, b2, a2 = gvbc
-    r3 = r2 + (r - r2) * a
-    g3 = g2 + (g - g2) * a
-    b3 = b2 + (b - b2) * a
-    return (r3, g3, b3, 1)
-
-def get_darkened_blue(color):
-    # Darkened version of non-transparent blue zone color preference
-    r, g, b, a = color
-    h, s, v    = rgb_to_hsv(r*255, g*255, b*255)
-    r, g, b    = hsv_to_rgb(h, s + (1 - s)/2, v*0.6)
-    
-    return (r/255, g/255, b/255, 1)
-
-
-EXTENSION_KEY = 'com.ryanbugden.eyeliner.settings'
-EXTENSION_DEFAULTS = {
-    "showFontDimensionsCheckbox": True,
-    "fontDimensionsLightColorWell": get_flattened_alpha(getDefault("glyphViewFontMetricsStrokeColor")),
-    "fontDimensionsDarkColorWell": get_flattened_alpha(getDefault("glyphViewFontMetricsStrokeColor.dark")),
-    "showBluesCheckbox": True,
-    "bluesLightColorWell": get_darkened_blue(get_flattened_alpha(getDefault("glyphViewBluesColor"))),
-    "bluesDarkColorWell": get_darkened_blue(get_flattened_alpha(getDefault("glyphViewBluesColor.dark"))),
-    "showFamilyBluesCheckbox": True,
-    "familyBluesLightColorWell": get_darkened_blue(get_flattened_alpha(getDefault("glyphViewFamilyBluesColor"))),
-    "familyBluesDarkColorWell": get_darkened_blue(get_flattened_alpha(getDefault("glyphViewFamilyBluesColor.dark"))),
-    "showMarginsCheckbox": False,
-    "marginsLightColorWell": (0,0,0,1),
-    "marginsDarkColorWell": (1,1,1,1),
-}
+from mojo.events import postEvent
+from defaults import get_flattened_alpha, get_darkened_blue, EXTENSION_KEY, EXTENSION_DEFAULTS
 
 
 class EyelinerSettings(ezui.WindowController):
@@ -50,9 +14,11 @@ class EyelinerSettings(ezui.WindowController):
         
         > : Show Eyes:
         > [X] Font Dimensions  @showFontDimensionsCheckbox
+        > [X] Local Guides     @showLocalGuidesCheckbox
+        > [X] Global Guides    @showGlobalGuidesCheckbox
         > [X] Blue Zones       @showBluesCheckbox
         > [X] Family Blues     @showFamilyBluesCheckbox
-        > [X] Margins          @showMarginsCheckbox
+        > [ ] Margins          @showMarginsCheckbox
         
         ---
         
@@ -162,20 +128,31 @@ class EyelinerSettings(ezui.WindowController):
         except KeyError as e:
             print(f"Eyeliner Settings error: {e}")
         
-
     def started(self):
         self.w.open()
         
-            
     def contentCallback(self, sender):
-        setExtensionDefault(EXTENSION_KEY, self.w.getItemValues())
-        
+        self.update_extension_settings()
         
     def resetDefaultsButtonCallback(self, sender):
-        print(self.w.getItemValues())
         self.w.setItemValues(EXTENSION_DEFAULTS)
+        self.update_extension_settings()
+        
+    def update_extension_settings(self):
         setExtensionDefault(EXTENSION_KEY, self.w.getItemValues())
+        postEvent(f"{EXTENSION_KEY}.eyelinerSettingsDidChange")
+        
 
-
-
-EyelinerSettings()
+if __name__ == '__main__':
+    # Register a subscriber event for when Eyeliner settings change
+    event_name = f"{EXTENSION_KEY}.eyelinerSettingsDidChange"
+    if event_name not in getRegisteredSubscriberEvents():
+        registerSubscriberEvent(
+            subscriberEventName=event_name,
+            methodName="eyelinerSettingsDidChange",
+            lowLevelEventNames=[event_name],
+            dispatcher="roboFont",
+            documentation="Sent when Eyeliner extension settings have changed.",
+            delay=None
+        )
+    EyelinerSettings()

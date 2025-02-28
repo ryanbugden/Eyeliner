@@ -1,26 +1,37 @@
 <h1>Eyeliner</h1>
 <p><img src="./../resources/mechanic_icon.png"  width="80"></p>
-<p>A RoboFont extension that highlights points and anchors that are aligned with vertical font dimensions, guidelines, or blue zones (if set to be visible).</p>
-<p><strong>Rest assured that your points are aligned, without having to zoom in and check.</strong></p>
+<p>A RoboFont extension that highlights points and anchors that are aligned with important areas in your workspace. With Eyeliner, you can rest assured that your points are aligned, without having to zoom in and check.</p>
 <p>--</p>
-<h3>What it looks at:</h3>
+<h2>How Eyeliner works</h2>
+<h3>Eyeliner looks at</h3>
 <ul>
 <li>On-curve points</li>
 <li>Anchors</li>
 <li>The prospective on-curve point(s) while using Slice Tool</li>
 <li>Components (if they were to be decomposed)</li>
 </ul>
-<h3>What it checks those things against:</h3>
+<h3>... and checks those things against...</h3>
 <ul>
 <li>Font dimensions (baseline, x-height, etc.)</li>
 <li>Guidelines (Horizontal, vertical, angled, etc.)</li>
-<li>The edges of blue-zones, if set to be displayed.</li>
+<li>The edges of blue-zones</li>
+<li>Margins</li>
 </ul>
-<p><em>Note: The eyes will match the appropriate color of whatever line it’s aligning to, based on the color preferences you have set in RoboFont.</em></p>
+<p>The eyes will match the appropriate color of whatever line it’s aligning to, based on the color preferences you have set in RoboFont. Alternatively, you can override those colors in the Settings...</p>
+<h2>Settings</h2>
+<p><img src="./../resources/settings.png"  width="400"></p>
+<ol>
+<li>You may show or hide any specific category of eye.</li>
+<li>You may override the default colors of those eyes.</li>
+</ol>
+<blockquote>
+<p>Note: The eyes for local and global guides respond to those guides’ colors, so the extension has left this option out.</p>
+</blockquote>
 <hr />
 <p><img alt="" src="./../resources/demo.png" /></p>
 <h3>Versions</h3>
-<p><code>2.9   2025.02.28  Update to new extension bundle. Add settings options.
+<p><code>3.0   2025.02.28  Add settings options. Add support for margins.
+                      Update to new extension bundle. 
     2.4   2023.07.27  Add support for mid-slice-tool-analysis + components. 
                       Thanks Connor &amp; Erik for the help!
     2.3.2 2023.05.31  Move eyes to foreground. Higher tolerance for diagonals. Clean up code. 

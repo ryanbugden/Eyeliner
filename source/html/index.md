@@ -2,24 +2,34 @@
 
 <img src="./../resources/mechanic_icon.png"  width="80">
 
-A RoboFont extension that highlights points and anchors that are aligned with vertical font dimensions, guidelines, or blue zones (if set to be visible).
-
-**Rest assured that your points are aligned, without having to zoom in and check.**
+A RoboFont extension that highlights points and anchors that are aligned with important areas in your workspace. With Eyeliner, you can rest assured that your points are aligned, without having to zoom in and check.
 
 --
 
-### What it looks at:
+## How Eyeliner works
+
+### Eyeliner looks at
 * On-curve points
 * Anchors
 * The prospective on-curve point(s) while using Slice Tool
 * Components (if they were to be decomposed)
 
-### What it checks those things against:
+### ... and checks those things against...
 * Font dimensions (baseline, x-height, etc.)
 * Guidelines (Horizontal, vertical, angled, etc.)
-* The edges of blue-zones, if set to be displayed.
+* The edges of blue-zones
+* Margins
 
-*Note: The eyes will match the appropriate color of whatever line it’s aligning to, based on the color preferences you have set in RoboFont.*
+The eyes will match the appropriate color of whatever line it’s aligning to, based on the color preferences you have set in RoboFont. Alternatively, you can override those colors in the Settings...
+
+## Settings
+
+<img src="./../resources/settings.png"  width="400">
+
+1. You may show or hide any specific category of eye.
+2. You may override the default colors of those eyes.
+
+> Note: The eyes for local and global guides respond to those guides’ colors, so the extension has left this option out.
 
 ---
 
@@ -27,7 +37,8 @@ A RoboFont extension that highlights points and anchors that are aligned with ve
 
 ### Versions
 ```
-	2.9   2025.02.28  Update to new extension bundle. Add settings options.
+	3.0   2025.02.28  Add settings options. Add support for margins.
+	                  Update to new extension bundle. 
 	2.4   2023.07.27  Add support for mid-slice-tool-analysis + components. 
 	                  Thanks Connor & Erik for the help!
 	2.3.2 2023.05.31  Move eyes to foreground. Higher tolerance for diagonals. Clean up code. 
