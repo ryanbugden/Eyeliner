@@ -1,6 +1,8 @@
 import ezui
 from colorsys import rgb_to_hsv, hsv_to_rgb
+from mojo.extensions import getExtensionDefault, setExtensionDefault
 from mojo.UI import getDefault
+
 
 
 def get_flattened_alpha(color):
@@ -21,18 +23,30 @@ def get_darkened_blue(color):
     
     return (r/255, g/255, b/255, 1)
 
-DEFAULT_COLORS = {
-    "marginsLightColorWell": (0,0,0,1),
-    "marginsDarkColorWell": (1,1,1,1),
+
+EXTENSION_KEY = 'com.ryanbugden.eyeliner.settings'
+EXTENSION_DEFAULTS = {
+    "showEyesCheckbox": 1,
+    "showFontDimensionsCheckbox": True,
+    "fontDimensionsColorCheckbox": False,
     "fontDimensionsLightColorWell": get_flattened_alpha(getDefault("glyphViewFontMetricsStrokeColor")),
     "fontDimensionsDarkColorWell": get_flattened_alpha(getDefault("glyphViewFontMetricsStrokeColor.dark")),
+    "showBluesCheckbox": True,
+    "bluesColorCheckbox": False,
     "bluesLightColorWell": get_darkened_blue(get_flattened_alpha(getDefault("glyphViewBluesColor"))),
     "bluesDarkColorWell": get_darkened_blue(get_flattened_alpha(getDefault("glyphViewBluesColor.dark"))),
+    "showFamilyBluesCheckbox": True,
+    "familyBluesColorCheckbox": False,
     "familyBluesLightColorWell": get_darkened_blue(get_flattened_alpha(getDefault("glyphViewFamilyBluesColor"))),
     "familyBluesDarkColorWell": get_darkened_blue(get_flattened_alpha(getDefault("glyphViewFamilyBluesColor.dark"))),
+    "showMarginsCheckbox": False,
+    "marginsColorCheckbox": False,
+    "marginsLightColorWell": (0,0,0,1),
+    "marginsDarkColorWell": (1,1,1,1),
 }
 
-class DemoController(ezui.WindowController):
+
+class EyelinerSettings(ezui.WindowController):
 
     def build(self):
         content = """
@@ -99,6 +113,12 @@ class DemoController(ezui.WindowController):
         >> * HorizontalStack   @marginsLabelStack
         >>> Light Mode         @marginsLightModeLabel
         >>> Dark Mode          @marginsDarkModeLabel
+        
+        ---
+        * TwoColumnForm        @form3
+        
+        > : 
+        > (Match App Colors)
         """
         title_column_width = 120
         item_column_width = 160
@@ -110,6 +130,10 @@ class DemoController(ezui.WindowController):
                 itemColumnWidth=item_column_width
             ),
             form2=dict(
+                titleColumnWidth=title_column_width,
+                itemColumnWidth=item_column_width
+            ),
+            form3=dict(
                 titleColumnWidth=title_column_width,
                 itemColumnWidth=item_column_width
             ),
@@ -188,15 +212,18 @@ class DemoController(ezui.WindowController):
             descriptionData=descriptionData,
             controller=self
         )
-        # Update enable/disable color wells with their corresponding checkboxes
-        for item_name in self.w.getItem("form2").getItems():
-            if "ColorWell" in item_name:
-                self.w.getItem(item_name).set(DEFAULT_COLORS[item_name])
+
+        prefs = getExtensionDefault(EXTENSION_KEY, fallback=EXTENSION_DEFAULTS)
+        try: self.w.setItemValues(prefs)
+        except KeyError: pass
+        
         self.contentCallback(None)
+
 
     def started(self):
         self.w.open()
             
+
     def contentCallback(self, sender):
         # Update enable/disable color wells with their corresponding checkboxes
         for item_name in self.w.content.getItems():
@@ -204,13 +231,17 @@ class DemoController(ezui.WindowController):
                 checkbox_name = item_name.replace("ColorWell", "Checkbox").replace("Light", "Color").replace("Dark", "Color")
                 checkbox = self.w.getItem(checkbox_name)
                 self.w.getItem(item_name).enable(checkbox.get())
-                # Reset color to extension defaults
+                # Reset color to extension EXTENSION_DEFAULTS
                 if not checkbox.get():
-                    self.w.getItem(item_name).set(DEFAULT_COLORS[item_name])
+                    self.w.getItem(item_name).set(EXTENSION_DEFAULTS[item_name])
         # Hide or show everything, depending on whether Show Eyes is checked
         show_eyes = self.w.getItem("showEyesCheckbox").get()
         for item_name in self.w.getItem("form2").getItems():
             if ("show" in item_name and "Checkbox" in item_name):
                 self.w.getItem(item_name).enable(show_eyes)
+        # Update extension defaults
+        setExtensionDefault(EXTENSION_KEY, self.w.getItemValues())
 
-DemoController()
+
+
+EyelinerSettings()

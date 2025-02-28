@@ -3,7 +3,7 @@ developer: Ryan Bugden
 developerURL: http://github.com/ryanbugden
 launchAtStartUp: true
 mainScript: main.py
-version: 2.9
+version: 3.0
 addToMenu:
 - path: settings.py
   preferredName: Settings

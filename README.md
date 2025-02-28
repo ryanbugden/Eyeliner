@@ -27,7 +27,8 @@ A RoboFont extension that highlights points and anchors that are aligned with ve
 
 ### Versions
 ```
-	2.9   2025.02.28  Update to new extension bundle. Add settings options.
+	3.0   2025.02.28  Add settings options. Add support for margins.
+	                  Update to new extension bundle. 
 	2.4   2023.07.27  Add support for mid-slice-tool-analysis + components. 
 	                  Thanks Connor & Erik for the help!
 	2.3.2 2023.05.31  Move eyes to foreground. Higher tolerance for diagonals. Clean up code. 
