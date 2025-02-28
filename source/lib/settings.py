@@ -26,21 +26,16 @@ def get_darkened_blue(color):
 
 EXTENSION_KEY = 'com.ryanbugden.eyeliner.settings'
 EXTENSION_DEFAULTS = {
-    "showEyesCheckbox": 1,
     "showFontDimensionsCheckbox": True,
-    "fontDimensionsColorCheckbox": False,
     "fontDimensionsLightColorWell": get_flattened_alpha(getDefault("glyphViewFontMetricsStrokeColor")),
     "fontDimensionsDarkColorWell": get_flattened_alpha(getDefault("glyphViewFontMetricsStrokeColor.dark")),
     "showBluesCheckbox": True,
-    "bluesColorCheckbox": False,
     "bluesLightColorWell": get_darkened_blue(get_flattened_alpha(getDefault("glyphViewBluesColor"))),
     "bluesDarkColorWell": get_darkened_blue(get_flattened_alpha(getDefault("glyphViewBluesColor.dark"))),
     "showFamilyBluesCheckbox": True,
-    "familyBluesColorCheckbox": False,
     "familyBluesLightColorWell": get_darkened_blue(get_flattened_alpha(getDefault("glyphViewFamilyBluesColor"))),
     "familyBluesDarkColorWell": get_darkened_blue(get_flattened_alpha(getDefault("glyphViewFamilyBluesColor.dark"))),
     "showMarginsCheckbox": False,
-    "marginsColorCheckbox": False,
     "marginsLightColorWell": (0,0,0,1),
     "marginsDarkColorWell": (1,1,1,1),
 }
@@ -50,75 +45,47 @@ class EyelinerSettings(ezui.WindowController):
 
     def build(self):
         content = """
+
         * TwoColumnForm        @form1
         
-        > : Eyes:
-        > [X] Show             @showEyesCheckbox
+        > : Show Eyes:
+        > [X] Font Dimensions  @showFontDimensionsCheckbox
+        > [X] Blue Zones       @showBluesCheckbox
+        > [X] Family Blues     @showFamilyBluesCheckbox
+        > [X] Margins          @showMarginsCheckbox
         
         ---
-
+        
         * TwoColumnForm        @form2
         
         > : Font Dimensions:
-        > * VerticalStack
-        >> [X] Show Eyes       @showFontDimensionsCheckbox
-        >> [ ] Override Color  @fontDimensionsColorCheckbox
-        
-        >> * HorizontalStack   @fontDimensionsColorStack
-        >>> * ColorWell        @fontDimensionsLightColorWell
-        >>> * ColorWell        @fontDimensionsDarkColorWell
-        
-        >> * HorizontalStack   @fontDimensionsLabelStack
-        >>> Light Mode         @fontDimensionsLightModeLabel
-        >>> Dark Mode          @fontDimensionsDarkModeLabel
-        
-        > ---
-                
+        > * HorizontalStack    @fontDimensionsColorStack
+        >> * ColorWell         @fontDimensionsLightColorWell
+        >> * ColorWell         @fontDimensionsDarkColorWell
+
         > : Blue Zones:
-        > * VerticalStack
-        >> [X] Show Eyes       @showBluesCheckbox
-        >> [ ] Override Color  @bluesColorCheckbox
-        >> * HorizontalStack   @bluesColorStack
-        >>> * ColorWell        @bluesLightColorWell
-        >>> * ColorWell        @bluesDarkColorWell
+        > * HorizontalStack    @bluesColorStack
+        >> * ColorWell         @bluesLightColorWell
+        >> * ColorWell         @bluesDarkColorWell
 
-        >> * HorizontalStack   @bluesLabelStack
-        >>> Light Mode         @bluesLightModeLabel
-        >>> Dark Mode          @bluesDarkModeLabel
-        
-        > ---
+        > : Family Blues:
+        > * HorizontalStack    @familyBluesColorStack
+        >> * ColorWell         @familyBluesLightColorWell
+        >> * ColorWell         @familyBluesDarkColorWell
 
-        > : Family Blue Zones:
-        > * VerticalStack
-        >> [X] Show Eyes       @showFamilyBluesCheckbox
-        >> [ ] Override Color  @familyBluesColorCheckbox
-        >> * HorizontalStack   @familyBluesColorStack
-        >>> * ColorWell        @familyBluesLightColorWell
-        >>> * ColorWell        @familyBluesDarkColorWell
-
-        >> * HorizontalStack   @familyBluesLabelStack
-        >>> Light Mode         @familyBluesLightModeLabel
-        >>> Dark Mode          @familyBluesDarkModeLabel
-        
-        > ---
-        
         > : Margins:
-        > * VerticalStack
-        >> [X] Show Eyes       @showMarginsCheckbox
-        >> [ ] Override Color  @marginsColorCheckbox
-        >> * HorizontalStack   @marginsColorStack
-        >>> * ColorWell        @marginsLightColorWell
-        >>> * ColorWell        @marginsDarkColorWell
+        > * HorizontalStack    @marginsColorStack
+        >> * ColorWell         @marginsLightColorWell
+        >> * ColorWell         @marginsDarkColorWell
         
-        >> * HorizontalStack   @marginsLabelStack
-        >>> Light Mode         @marginsLightModeLabel
-        >>> Dark Mode          @marginsDarkModeLabel
+        > :
+        > * HorizontalStack    @labelStack
+        >> Light Mode          @lightModeLabel
+        >> Dark Mode           @darkModeLabel
         
-        ---
-        * TwoColumnForm        @form3
+        > ---
         
-        > : 
-        > (Match App Colors)
+        > (Reset Defaults)     @resetDefaultsButton
         """
         title_column_width = 120
         item_column_width = 160
@@ -137,109 +104,76 @@ class EyelinerSettings(ezui.WindowController):
                 titleColumnWidth=title_column_width,
                 itemColumnWidth=item_column_width
             ),
-            fontDimensionsLightModeLabel=dict(
-                width=colorwell_width,
-                sizeStyle='mini',
-            ),
-            fontDimensionsDarkModeLabel=dict(
-                width=colorwell_width,
-                sizeStyle='mini',
-            ),
-            bluesLightModeLabel=dict(
-                width=colorwell_width,
-                sizeStyle='mini',
-            ),
-            bluesDarkModeLabel=dict(
-                width=colorwell_width,
-                sizeStyle='mini',
-            ),
-            familyBluesLightModeLabel=dict(
-                width=colorwell_width,
-                sizeStyle='mini',
-            ),
-            familyBluesDarkModeLabel=dict(
-                width=colorwell_width,
-                sizeStyle='mini',
-            ),
-            marginsLightModeLabel=dict(
-                width=colorwell_width,
-                sizeStyle='mini',
-            ),
-            marginsDarkModeLabel=dict(
-                width=colorwell_width,
-                sizeStyle='mini',
-            ),
             fontDimensionsLightColorWell=dict(
-                width=colorwell_width
+                width=colorwell_width,
+                height=colorwell_height
             ),
             fontDimensionsDarkColorWell=dict(
-                width=colorwell_width
-            ),
-            fontDimensionsColorStack=dict(
+                width=colorwell_width,
                 height=colorwell_height
             ),
             bluesLightColorWell=dict(
-                width=colorwell_width
+                width=colorwell_width,
+                height=colorwell_height
             ),
             bluesDarkColorWell=dict(
-                width=colorwell_width
-            ),
-            bluesColorStack=dict(
+                width=colorwell_width,
                 height=colorwell_height
             ),
             familyBluesLightColorWell=dict(
-                width=colorwell_width
+                width=colorwell_width,
+                height=colorwell_height
             ),
             familyBluesDarkColorWell=dict(
-                width=colorwell_width
-            ),
-            familyBluesColorStack=dict(
+                width=colorwell_width,
                 height=colorwell_height
             ),
             marginsLightColorWell=dict(
-                width=colorwell_width
-            ),
-            marginsDarkColorWell=dict(
-                width=colorwell_width
-            ),
-            marginsColorStack=dict(
+                width=colorwell_width,
                 height=colorwell_height
             ),
+            marginsDarkColorWell=dict(
+                width=colorwell_width,
+                height=colorwell_height
+            ),
+            lightModeLabel=dict(
+                width=colorwell_width,
+                sizeStyle='mini',
+            ),
+            darkModeLabel=dict(
+                width=colorwell_width,
+                sizeStyle='mini',
+            ),
+            resetDefaultsButton=dict(
+                width='fill'
+            )
+
         )
-        self.w = ezui.EZWindow(
+        self.w = ezui.EZPanel(
             title="Eyeliner Settings",
             content=content,
             descriptionData=descriptionData,
             controller=self
         )
-
+        self.w.getNSWindow().setTitlebarAppearsTransparent_(True)
         prefs = getExtensionDefault(EXTENSION_KEY, fallback=EXTENSION_DEFAULTS)
-        try: self.w.setItemValues(prefs)
-        except KeyError: pass
+        try:
+            self.w.setItemValues(prefs)
+        except KeyError as e:
+            print(f"Eyeliner Settings error: {e}")
         
-        self.contentCallback(None)
-
 
     def started(self):
         self.w.open()
+        
             
-
     def contentCallback(self, sender):
-        # Update enable/disable color wells with their corresponding checkboxes
-        for item_name in self.w.content.getItems():
-            if "ColorWell" in item_name:
-                checkbox_name = item_name.replace("ColorWell", "Checkbox").replace("Light", "Color").replace("Dark", "Color")
-                checkbox = self.w.getItem(checkbox_name)
-                self.w.getItem(item_name).enable(checkbox.get())
-                # Reset color to extension EXTENSION_DEFAULTS
-                if not checkbox.get():
-                    self.w.getItem(item_name).set(EXTENSION_DEFAULTS[item_name])
-        # Hide or show everything, depending on whether Show Eyes is checked
-        show_eyes = self.w.getItem("showEyesCheckbox").get()
-        for item_name in self.w.getItem("form2").getItems():
-            if ("show" in item_name and "Checkbox" in item_name):
-                self.w.getItem(item_name).enable(show_eyes)
-        # Update extension defaults
+        setExtensionDefault(EXTENSION_KEY, self.w.getItemValues())
+        
+        
+    def resetDefaultsButtonCallback(self, sender):
+        print(self.w.getItemValues())
+        self.w.setItemValues(EXTENSION_DEFAULTS)
         setExtensionDefault(EXTENSION_KEY, self.w.getItemValues())
 
 
