@@ -1,8 +1,8 @@
 # Eyeliner
 
-<img src="./source/resources/mechanic_icon.png"  width="80">
+<img src="./../resources/mechanic_icon.png"  width="80">
 
-Eyeliner is a RoboFont extension that highlights points and anchors that are aligned with important areas in your workspace. With Eyeliner, you can rest assured that your points are aligned, without having to zoom in and check.
+A RoboFont extension that highlights points and anchors that are aligned with important areas in your workspace. With Eyeliner, you can rest assured that your points are aligned, without having to zoom in and check.
 
 --
 
@@ -24,7 +24,7 @@ The eyes will match the appropriate color of whatever line it’s aligning to, b
 
 ## Settings
 
-<img src="./source/resources/settings.png"  width="400">
+<img src="./../resources/settings.png"  width="400">
 
 1. You may show or hide any specific category of eye.
 2. You may override the default colors of those eyes.
@@ -33,7 +33,7 @@ The eyes will match the appropriate color of whatever line it’s aligning to, b
 
 ---
 
-![](./source/resources/demo.png)
+![](./../resources/demo.png)
 
 ### Versions
 ```
