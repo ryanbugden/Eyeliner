@@ -2,7 +2,7 @@
 
 <img src="./source/resources/mechanic_icon.png"  width="80">
 
-A RoboFont extension that highlights points and anchors that are aligned with important areas in your workspace. With Eyeliner, you can rest assured that your points are aligned, without having to zoom in and check.
+Eyeliner is a RoboFont extension that highlights points and anchors that are aligned with important areas in your workspace. With Eyeliner, you can rest assured that your points are aligned, without having to zoom in and check.
 
 --
 
