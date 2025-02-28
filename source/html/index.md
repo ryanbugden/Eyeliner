@@ -1,6 +1,6 @@
 # Eyeliner
 
-<img src="./source/resources/mechanic_icon.png"  width="80">
+<img src="./../resources/mechanic_icon.png"  width="80">
 
 A RoboFont extension that highlights points and anchors that are aligned with vertical font dimensions, guidelines, or blue zones (if set to be visible).
 
@@ -23,7 +23,7 @@ A RoboFont extension that highlights points and anchors that are aligned with ve
 
 ---
 
-![](./source/resources/demo.png)
+![](./../resources/demo.png)
 
 ### Versions
 ```
