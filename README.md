@@ -22,6 +22,8 @@ Eyeliner is a RoboFont extension that highlights points and anchors that are ali
 
 The eyes will match the appropriate color of whatever line it’s aligning to, based on the color preferences you have set in RoboFont. Alternatively, you can override those colors in the Settings...
 
+![](./source/resources/demo.png)
+
 ## Settings
 
 <img src="./source/resources/settings.png"  width="400">
@@ -33,7 +35,7 @@ The eyes will match the appropriate color of whatever line it’s aligning to, b
 
 ---
 
-![](./source/resources/demo.png)
+
 
 ### Versions
 ```
