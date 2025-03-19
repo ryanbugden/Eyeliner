@@ -1,6 +1,7 @@
 from colorsys import rgb_to_hsv, hsv_to_rgb
 from mojo.UI import getDefault
 
+
 def get_flattened_alpha(color):
     # Flatten transparency of eye, using background color preference
     gvbc = getDefault("glyphViewBackgroundColor")
